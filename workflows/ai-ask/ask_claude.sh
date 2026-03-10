@@ -3,9 +3,13 @@
 
 query="$1"
 
-# Check for API key
+# Alfred doesn't source shell profiles, so grab the key from there if not set
 if [ -z "$ANTHROPIC_API_KEY" ]; then
-    echo "Set your API key first: use 'aikey' keyword in Alfred"
+    ANTHROPIC_API_KEY=$(grep 'ANTHROPIC_API_KEY' "$HOME/.zshrc" 2>/dev/null | sed 's/.*="\(.*\)"/\1/' | tail -1)
+fi
+
+if [ -z "$ANTHROPIC_API_KEY" ]; then
+    echo "No API key found. Add 'export ANTHROPIC_API_KEY=\"sk-...\"' to ~/.zshrc"
     exit 0
 fi
 

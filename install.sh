@@ -1,6 +1,6 @@
 #!/bin/bash
 # Alfred Workflow Installer
-# Symlinks all workflows into Alfred's workflow directory
+# Copies all workflows into Alfred's workflow directory
 
 set -euo pipefail
 
@@ -14,7 +14,6 @@ echo "Installing Alfred workflows..."
 for workflow_dir in "$SCRIPT_DIR"/workflows/*/; do
     workflow_name=$(basename "$workflow_dir")
 
-    # Check for info.plist (required for Alfred to recognize it)
     if [ ! -f "$workflow_dir/info.plist" ]; then
         echo "  SKIP: $workflow_name (no info.plist)"
         continue
@@ -23,18 +22,22 @@ for workflow_dir in "$SCRIPT_DIR"/workflows/*/; do
     target="$ALFRED_WORKFLOWS/user.workflow.$workflow_name"
 
     if [ -L "$target" ]; then
-        echo "  UPDATE: $workflow_name (re-linking)"
+        echo "  UPDATE: $workflow_name (replacing symlink with copy)"
         rm "$target"
     elif [ -d "$target" ]; then
-        echo "  SKIP: $workflow_name (non-symlink dir exists, remove manually to replace)"
-        continue
+        echo "  UPDATE: $workflow_name (replacing existing)"
+        rm -rf "$target"
     else
         echo "  INSTALL: $workflow_name"
     fi
 
-    ln -s "$workflow_dir" "$target"
+    cp -R "$workflow_dir" "$target/"
 done
 
+# Restart Alfred to pick up changes
+killall Alfred 2>/dev/null
+sleep 1
+open -a "Alfred 5" 2>/dev/null || open -a "Alfred" 2>/dev/null
+
 echo ""
-echo "Done! Restart Alfred (or reload workflows) to pick up changes."
-echo "  Alfred > Preferences > Workflows should now show the new workflows."
+echo "Done! Alfred has been restarted with the new workflows."
