@@ -1,0 +1,1660 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>bundleid</key>
+	<string>com.neub.alfred.dev-tools</string>
+	<key>category</key>
+	<string>Tools</string>
+	<key>connections</key>
+	<dict>
+		<!-- uuid keyword -> run script -> copy to clipboard -> notification -->
+		<key>A1000001-0001-0001-0001-000000000001</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>A2000001-0001-0001-0001-000000000001</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>A2000001-0001-0001-0001-000000000001</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>C1000001-0001-0001-0001-000000000001</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>C1000001-0001-0001-0001-000000000001</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>D1000001-0001-0001-0001-000000000001</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+
+		<!-- base64e keyword -> run script -> copy -> notification -->
+		<key>A1000002-0002-0002-0002-000000000002</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>A2000002-0002-0002-0002-000000000002</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>A2000002-0002-0002-0002-000000000002</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>C1000002-0002-0002-0002-000000000002</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>C1000002-0002-0002-0002-000000000002</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>D1000002-0002-0002-0002-000000000002</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+
+		<!-- base64d keyword -> run script -> copy -> notification -->
+		<key>A1000003-0003-0003-0003-000000000003</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>A2000003-0003-0003-0003-000000000003</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>A2000003-0003-0003-0003-000000000003</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>C1000003-0003-0003-0003-000000000003</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>C1000003-0003-0003-0003-000000000003</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>D1000003-0003-0003-0003-000000000003</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+
+		<!-- epoch keyword -> run script -> copy -> notification -->
+		<key>A1000004-0004-0004-0004-000000000004</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>A2000004-0004-0004-0004-000000000004</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>A2000004-0004-0004-0004-000000000004</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>C1000004-0004-0004-0004-000000000004</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>C1000004-0004-0004-0004-000000000004</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>D1000004-0004-0004-0004-000000000004</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+
+		<!-- hash script filter -> copy to clipboard -->
+		<key>A1000005-0005-0005-0005-000000000005</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>C1000005-0005-0005-0005-000000000005</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>C1000005-0005-0005-0005-000000000005</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>D1000005-0005-0005-0005-000000000005</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+
+		<!-- json keyword -> run script -> copy -> notification -->
+		<key>A1000006-0006-0006-0006-000000000006</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>A2000006-0006-0006-0006-000000000006</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>A2000006-0006-0006-0006-000000000006</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>C1000006-0006-0006-0006-000000000006</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>C1000006-0006-0006-0006-000000000006</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>D1000006-0006-0006-0006-000000000006</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+
+		<!-- urlencode keyword -> run script -> copy -> notification -->
+		<key>A1000007-0007-0007-0007-000000000007</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>A2000007-0007-0007-0007-000000000007</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>A2000007-0007-0007-0007-000000000007</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>C1000007-0007-0007-0007-000000000007</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>C1000007-0007-0007-0007-000000000007</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>D1000007-0007-0007-0007-000000000007</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+
+		<!-- urldecode keyword -> run script -> copy -> notification -->
+		<key>A1000008-0008-0008-0008-000000000008</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>A2000008-0008-0008-0008-000000000008</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>A2000008-0008-0008-0008-000000000008</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>C1000008-0008-0008-0008-000000000008</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>C1000008-0008-0008-0008-000000000008</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>D1000008-0008-0008-0008-000000000008</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+
+		<!-- lorem keyword -> run script -> copy -> notification -->
+		<key>A1000009-0009-0009-0009-000000000009</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>A2000009-0009-0009-0009-000000000009</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>A2000009-0009-0009-0009-000000000009</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>C1000009-0009-0009-0009-000000000009</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>C1000009-0009-0009-0009-000000000009</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>D1000009-0009-0009-0009-000000000009</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+
+		<!-- hex keyword -> run script -> copy -> notification -->
+		<key>A100000A-000A-000A-000A-00000000000A</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>A200000A-000A-000A-000A-00000000000A</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>A200000A-000A-000A-000A-00000000000A</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>C100000A-000A-000A-000A-00000000000A</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>C100000A-000A-000A-000A-00000000000A</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>D100000A-000A-000A-000A-00000000000A</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+	</dict>
+	<key>createdby</key>
+	<string>neub</string>
+	<key>description</key>
+	<string>Developer utilities - UUID, base64, hash, epoch, JSON, URL encode/decode</string>
+	<key>disabled</key>
+	<false/>
+	<key>name</key>
+	<string>Dev Tools</string>
+	<key>objects</key>
+	<array>
+		<!-- ==================== UUID ==================== -->
+		<!-- Keyword: uuid -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>keyword</key>
+				<string>uuid</string>
+				<key>subtext</key>
+				<string>Generate a UUID v4</string>
+				<key>text</key>
+				<string>Generate UUID</string>
+				<key>withspace</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.keyword</string>
+			<key>uid</key>
+			<string>A1000001-0001-0001-0001-000000000001</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<!-- Run Script: uuid.sh -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>./uuid.sh</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>A2000001-0001-0001-0001-000000000001</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<!-- Copy to Clipboard: uuid -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>clipboardtext</key>
+				<string>{query}</string>
+				<key>transient</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.clipboard</string>
+			<key>uid</key>
+			<string>C1000001-0001-0001-0001-000000000001</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<!-- Notification: uuid -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<true/>
+				<key>removeextension</key>
+				<false/>
+				<key>text</key>
+				<string>UUID copied to clipboard</string>
+				<key>title</key>
+				<string>Dev Tools</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>D1000001-0001-0001-0001-000000000001</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+
+		<!-- ==================== BASE64 ENCODE ==================== -->
+		<!-- Keyword: base64e -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>keyword</key>
+				<string>base64e</string>
+				<key>subtext</key>
+				<string>Base64 encode text</string>
+				<key>text</key>
+				<string>Base64 Encode</string>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.keyword</string>
+			<key>uid</key>
+			<string>A1000002-0002-0002-0002-000000000002</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<!-- Run Script: base64_encode.sh -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>echo -n "{query}" | base64</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>A2000002-0002-0002-0002-000000000002</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<!-- Copy to Clipboard: base64e -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>clipboardtext</key>
+				<string>{query}</string>
+				<key>transient</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.clipboard</string>
+			<key>uid</key>
+			<string>C1000002-0002-0002-0002-000000000002</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<!-- Notification: base64e -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<true/>
+				<key>removeextension</key>
+				<false/>
+				<key>text</key>
+				<string>Base64 encoded text copied</string>
+				<key>title</key>
+				<string>Dev Tools</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>D1000002-0002-0002-0002-000000000002</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+
+		<!-- ==================== BASE64 DECODE ==================== -->
+		<!-- Keyword: base64d -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>keyword</key>
+				<string>base64d</string>
+				<key>subtext</key>
+				<string>Base64 decode text</string>
+				<key>text</key>
+				<string>Base64 Decode</string>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.keyword</string>
+			<key>uid</key>
+			<string>A1000003-0003-0003-0003-000000000003</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<!-- Run Script: base64_decode.sh -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>echo -n "{query}" | base64 -D</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>A2000003-0003-0003-0003-000000000003</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<!-- Copy to Clipboard: base64d -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>clipboardtext</key>
+				<string>{query}</string>
+				<key>transient</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.clipboard</string>
+			<key>uid</key>
+			<string>C1000003-0003-0003-0003-000000000003</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<!-- Notification: base64d -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<true/>
+				<key>removeextension</key>
+				<false/>
+				<key>text</key>
+				<string>Base64 decoded text copied</string>
+				<key>title</key>
+				<string>Dev Tools</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>D1000003-0003-0003-0003-000000000003</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+
+		<!-- ==================== EPOCH ==================== -->
+		<!-- Keyword: epoch -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>1</integer>
+				<key>keyword</key>
+				<string>epoch</string>
+				<key>subtext</key>
+				<string>Show current timestamp or convert a timestamp</string>
+				<key>text</key>
+				<string>Epoch Time</string>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.keyword</string>
+			<key>uid</key>
+			<string>A1000004-0004-0004-0004-000000000004</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<!-- Run Script: epoch.sh -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>query="{query}"
+if [ -z "$query" ]; then
+    date +%s
+else
+    date -r "$query" '+%Y-%m-%d %H:%M:%S %Z'
+fi</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>A2000004-0004-0004-0004-000000000004</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<!-- Copy to Clipboard: epoch -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>clipboardtext</key>
+				<string>{query}</string>
+				<key>transient</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.clipboard</string>
+			<key>uid</key>
+			<string>C1000004-0004-0004-0004-000000000004</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<!-- Notification: epoch -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<true/>
+				<key>removeextension</key>
+				<false/>
+				<key>text</key>
+				<string>{query}</string>
+				<key>title</key>
+				<string>Epoch - Copied</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>D1000004-0004-0004-0004-000000000004</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+
+		<!-- ==================== HASH (Script Filter) ==================== -->
+		<!-- Script Filter: hash -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>alfredfiltersresults</key>
+				<false/>
+				<key>alfredfiltersresultsmatchmode</key>
+				<integer>0</integer>
+				<key>argumenttreatemptyqueryasnil</key>
+				<false/>
+				<key>argumenttrimmode</key>
+				<integer>0</integer>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>keyword</key>
+				<string>hash</string>
+				<key>queuedelaycustom</key>
+				<integer>3</integer>
+				<key>queuedelayimmediatelyalinitially</key>
+				<true/>
+				<key>queuedelaymode</key>
+				<integer>0</integer>
+				<key>queuemode</key>
+				<integer>1</integer>
+				<key>runningsubtext</key>
+				<string>Computing hashes...</string>
+				<key>script</key>
+				<string>query="{query}"
+
+if [ -z "$query" ]; then
+    echo '{"items":[{"title":"Type something to hash...","subtitle":"Enter text after the hash keyword","valid":false}]}'
+    exit 0
+fi
+
+md5=$(echo -n "$query" | md5)
+sha256=$(echo -n "$query" | shasum -a 256 | awk '{print $1}')
+
+cat &lt;&lt;EOFJ
+{
+  "items": [
+    {
+      "uid": "md5",
+      "title": "$md5",
+      "subtitle": "MD5 - Press Enter to copy",
+      "arg": "$md5",
+      "text": {
+        "copy": "$md5",
+        "largetype": "$md5"
+      }
+    },
+    {
+      "uid": "sha256",
+      "title": "$sha256",
+      "subtitle": "SHA256 - Press Enter to copy",
+      "arg": "$sha256",
+      "text": {
+        "copy": "$sha256",
+        "largetype": "$sha256"
+      }
+    }
+  ]
+}
+EOFJ</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>subtext</key>
+				<string>Show MD5 and SHA256 hashes</string>
+				<key>title</key>
+				<string>Hash Text</string>
+				<key>type</key>
+				<integer>0</integer>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.scriptfilter</string>
+			<key>uid</key>
+			<string>A1000005-0005-0005-0005-000000000005</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<!-- Copy to Clipboard: hash -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>clipboardtext</key>
+				<string>{query}</string>
+				<key>transient</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.clipboard</string>
+			<key>uid</key>
+			<string>C1000005-0005-0005-0005-000000000005</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<!-- Notification: hash -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<true/>
+				<key>removeextension</key>
+				<false/>
+				<key>text</key>
+				<string>Hash copied to clipboard</string>
+				<key>title</key>
+				<string>Dev Tools</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>D1000005-0005-0005-0005-000000000005</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+
+		<!-- ==================== JSON FORMAT ==================== -->
+		<!-- Keyword: json -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>keyword</key>
+				<string>json</string>
+				<key>subtext</key>
+				<string>Pretty-print JSON from clipboard</string>
+				<key>text</key>
+				<string>Format JSON</string>
+				<key>withspace</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.keyword</string>
+			<key>uid</key>
+			<string>A1000006-0006-0006-0006-000000000006</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<!-- Run Script: json_format.sh -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>result=$(pbpaste | python3 -m json.tool 2>&amp;1)
+if [ $? -eq 0 ]; then
+    echo "$result" | pbcopy
+    echo "JSON formatted and copied to clipboard"
+else
+    echo "Invalid JSON: $result"
+fi</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>A2000006-0006-0006-0006-000000000006</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<!-- Copy to Clipboard: json (already handled in script) -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>clipboardtext</key>
+				<string>{query}</string>
+				<key>transient</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.clipboard</string>
+			<key>uid</key>
+			<string>C1000006-0006-0006-0006-000000000006</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<!-- Notification: json -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<true/>
+				<key>removeextension</key>
+				<false/>
+				<key>text</key>
+				<string>{query}</string>
+				<key>title</key>
+				<string>Dev Tools - JSON</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>D1000006-0006-0006-0006-000000000006</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+
+		<!-- ==================== URL ENCODE ==================== -->
+		<!-- Keyword: urlencode -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>keyword</key>
+				<string>urlencode</string>
+				<key>subtext</key>
+				<string>URL encode text</string>
+				<key>text</key>
+				<string>URL Encode</string>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.keyword</string>
+			<key>uid</key>
+			<string>A1000007-0007-0007-0007-000000000007</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<!-- Run Script: urlencode -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "{query}"</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>A2000007-0007-0007-0007-000000000007</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<!-- Copy to Clipboard: urlencode -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>clipboardtext</key>
+				<string>{query}</string>
+				<key>transient</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.clipboard</string>
+			<key>uid</key>
+			<string>C1000007-0007-0007-0007-000000000007</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<!-- Notification: urlencode -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<true/>
+				<key>removeextension</key>
+				<false/>
+				<key>text</key>
+				<string>URL encoded text copied</string>
+				<key>title</key>
+				<string>Dev Tools</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>D1000007-0007-0007-0007-000000000007</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+
+		<!-- ==================== URL DECODE ==================== -->
+		<!-- Keyword: urldecode -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>keyword</key>
+				<string>urldecode</string>
+				<key>subtext</key>
+				<string>URL decode text</string>
+				<key>text</key>
+				<string>URL Decode</string>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.keyword</string>
+			<key>uid</key>
+			<string>A1000008-0008-0008-0008-000000000008</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<!-- Run Script: urldecode -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>python3 -c "import urllib.parse, sys; print(urllib.parse.unquote(sys.argv[1]))" "{query}"</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>A2000008-0008-0008-0008-000000000008</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<!-- Copy to Clipboard: urldecode -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>clipboardtext</key>
+				<string>{query}</string>
+				<key>transient</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.clipboard</string>
+			<key>uid</key>
+			<string>C1000008-0008-0008-0008-000000000008</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<!-- Notification: urldecode -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<true/>
+				<key>removeextension</key>
+				<false/>
+				<key>text</key>
+				<string>URL decoded text copied</string>
+				<key>title</key>
+				<string>Dev Tools</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>D1000008-0008-0008-0008-000000000008</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+
+		<!-- ==================== LOREM IPSUM ==================== -->
+		<!-- Keyword: lorem -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>keyword</key>
+				<string>lorem</string>
+				<key>subtext</key>
+				<string>Generate lorem ipsum paragraph</string>
+				<key>text</key>
+				<string>Lorem Ipsum</string>
+				<key>withspace</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.keyword</string>
+			<key>uid</key>
+			<string>A1000009-0009-0009-0009-000000000009</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<!-- Run Script: lorem.sh -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>echo "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>A2000009-0009-0009-0009-000000000009</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<!-- Copy to Clipboard: lorem -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>clipboardtext</key>
+				<string>{query}</string>
+				<key>transient</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.clipboard</string>
+			<key>uid</key>
+			<string>C1000009-0009-0009-0009-000000000009</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<!-- Notification: lorem -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<true/>
+				<key>removeextension</key>
+				<false/>
+				<key>text</key>
+				<string>Lorem ipsum copied to clipboard</string>
+				<key>title</key>
+				<string>Dev Tools</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>D1000009-0009-0009-0009-000000000009</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+
+		<!-- ==================== HEX CONVERT ==================== -->
+		<!-- Keyword: hex -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>keyword</key>
+				<string>hex</string>
+				<key>subtext</key>
+				<string>Convert hex color to RGB or RGB to hex</string>
+				<key>text</key>
+				<string>Hex/RGB Convert</string>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.keyword</string>
+			<key>uid</key>
+			<string>A100000A-000A-000A-000A-00000000000A</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<!-- Run Script: hex_convert -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>query="{query}"
+# Remove leading # if present
+query=$(echo "$query" | sed 's/^#//')
+
+# Check if input looks like RGB (contains comma)
+if echo "$query" | grep -q ','; then
+    # RGB to Hex
+    r=$(echo "$query" | cut -d',' -f1 | tr -d ' ')
+    g=$(echo "$query" | cut -d',' -f2 | tr -d ' ')
+    b=$(echo "$query" | cut -d',' -f3 | tr -d ' ')
+    printf "#%02X%02X%02X\n" "$r" "$g" "$b"
+else
+    # Hex to RGB
+    if [ ${#query} -eq 3 ]; then
+        r=$(printf "%d" "0x${query:0:1}${query:0:1}")
+        g=$(printf "%d" "0x${query:1:1}${query:1:1}")
+        b=$(printf "%d" "0x${query:2:1}${query:2:1}")
+    elif [ ${#query} -eq 6 ]; then
+        r=$(printf "%d" "0x${query:0:2}")
+        g=$(printf "%d" "0x${query:2:2}")
+        b=$(printf "%d" "0x${query:4:2}")
+    else
+        echo "Invalid input. Use hex (e.g. FF5733) or RGB (e.g. 255,87,51)"
+        exit 1
+    fi
+    echo "rgb($r, $g, $b)"
+fi</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>A200000A-000A-000A-000A-00000000000A</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<!-- Copy to Clipboard: hex -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>clipboardtext</key>
+				<string>{query}</string>
+				<key>transient</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.clipboard</string>
+			<key>uid</key>
+			<string>C100000A-000A-000A-000A-00000000000A</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<!-- Notification: hex -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<true/>
+				<key>removeextension</key>
+				<false/>
+				<key>text</key>
+				<string>Color conversion copied to clipboard</string>
+				<key>title</key>
+				<string>Dev Tools</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>D100000A-000A-000A-000A-00000000000A</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+	</array>
+	<key>readme</key>
+	<string>Dev Tools - Developer Utilities for Alfred 5
+
+Keywords:
+- uuid: Generate a UUID v4
+- base64e {text}: Base64 encode text
+- base64d {text}: Base64 decode text
+- epoch: Show current unix timestamp
+- epoch {timestamp}: Convert timestamp to date
+- hash {text}: Show MD5 and SHA256 hashes
+- json: Pretty-print JSON from clipboard
+- urlencode {text}: URL encode text
+- urldecode {text}: URL decode text
+- lorem: Generate lorem ipsum paragraph
+- hex {value}: Convert hex to RGB or RGB to hex</string>
+	<key>uidata</key>
+	<dict>
+		<!-- UUID row -->
+		<key>A1000001-0001-0001-0001-000000000001</key>
+		<dict>
+			<key>xpos</key>
+			<integer>50</integer>
+			<key>ypos</key>
+			<integer>50</integer>
+		</dict>
+		<key>A2000001-0001-0001-0001-000000000001</key>
+		<dict>
+			<key>xpos</key>
+			<integer>270</integer>
+			<key>ypos</key>
+			<integer>50</integer>
+		</dict>
+		<key>C1000001-0001-0001-0001-000000000001</key>
+		<dict>
+			<key>xpos</key>
+			<integer>490</integer>
+			<key>ypos</key>
+			<integer>50</integer>
+		</dict>
+		<key>D1000001-0001-0001-0001-000000000001</key>
+		<dict>
+			<key>xpos</key>
+			<integer>710</integer>
+			<key>ypos</key>
+			<integer>50</integer>
+		</dict>
+		<!-- Base64 Encode row -->
+		<key>A1000002-0002-0002-0002-000000000002</key>
+		<dict>
+			<key>xpos</key>
+			<integer>50</integer>
+			<key>ypos</key>
+			<integer>160</integer>
+		</dict>
+		<key>A2000002-0002-0002-0002-000000000002</key>
+		<dict>
+			<key>xpos</key>
+			<integer>270</integer>
+			<key>ypos</key>
+			<integer>160</integer>
+		</dict>
+		<key>C1000002-0002-0002-0002-000000000002</key>
+		<dict>
+			<key>xpos</key>
+			<integer>490</integer>
+			<key>ypos</key>
+			<integer>160</integer>
+		</dict>
+		<key>D1000002-0002-0002-0002-000000000002</key>
+		<dict>
+			<key>xpos</key>
+			<integer>710</integer>
+			<key>ypos</key>
+			<integer>160</integer>
+		</dict>
+		<!-- Base64 Decode row -->
+		<key>A1000003-0003-0003-0003-000000000003</key>
+		<dict>
+			<key>xpos</key>
+			<integer>50</integer>
+			<key>ypos</key>
+			<integer>270</integer>
+		</dict>
+		<key>A2000003-0003-0003-0003-000000000003</key>
+		<dict>
+			<key>xpos</key>
+			<integer>270</integer>
+			<key>ypos</key>
+			<integer>270</integer>
+		</dict>
+		<key>C1000003-0003-0003-0003-000000000003</key>
+		<dict>
+			<key>xpos</key>
+			<integer>490</integer>
+			<key>ypos</key>
+			<integer>270</integer>
+		</dict>
+		<key>D1000003-0003-0003-0003-000000000003</key>
+		<dict>
+			<key>xpos</key>
+			<integer>710</integer>
+			<key>ypos</key>
+			<integer>270</integer>
+		</dict>
+		<!-- Epoch row -->
+		<key>A1000004-0004-0004-0004-000000000004</key>
+		<dict>
+			<key>xpos</key>
+			<integer>50</integer>
+			<key>ypos</key>
+			<integer>380</integer>
+		</dict>
+		<key>A2000004-0004-0004-0004-000000000004</key>
+		<dict>
+			<key>xpos</key>
+			<integer>270</integer>
+			<key>ypos</key>
+			<integer>380</integer>
+		</dict>
+		<key>C1000004-0004-0004-0004-000000000004</key>
+		<dict>
+			<key>xpos</key>
+			<integer>490</integer>
+			<key>ypos</key>
+			<integer>380</integer>
+		</dict>
+		<key>D1000004-0004-0004-0004-000000000004</key>
+		<dict>
+			<key>xpos</key>
+			<integer>710</integer>
+			<key>ypos</key>
+			<integer>380</integer>
+		</dict>
+		<!-- Hash row -->
+		<key>A1000005-0005-0005-0005-000000000005</key>
+		<dict>
+			<key>xpos</key>
+			<integer>50</integer>
+			<key>ypos</key>
+			<integer>490</integer>
+		</dict>
+		<key>C1000005-0005-0005-0005-000000000005</key>
+		<dict>
+			<key>xpos</key>
+			<integer>490</integer>
+			<key>ypos</key>
+			<integer>490</integer>
+		</dict>
+		<key>D1000005-0005-0005-0005-000000000005</key>
+		<dict>
+			<key>xpos</key>
+			<integer>710</integer>
+			<key>ypos</key>
+			<integer>490</integer>
+		</dict>
+		<!-- JSON row -->
+		<key>A1000006-0006-0006-0006-000000000006</key>
+		<dict>
+			<key>xpos</key>
+			<integer>50</integer>
+			<key>ypos</key>
+			<integer>600</integer>
+		</dict>
+		<key>A2000006-0006-0006-0006-000000000006</key>
+		<dict>
+			<key>xpos</key>
+			<integer>270</integer>
+			<key>ypos</key>
+			<integer>600</integer>
+		</dict>
+		<key>C1000006-0006-0006-0006-000000000006</key>
+		<dict>
+			<key>xpos</key>
+			<integer>490</integer>
+			<key>ypos</key>
+			<integer>600</integer>
+		</dict>
+		<key>D1000006-0006-0006-0006-000000000006</key>
+		<dict>
+			<key>xpos</key>
+			<integer>710</integer>
+			<key>ypos</key>
+			<integer>600</integer>
+		</dict>
+		<!-- URL Encode row -->
+		<key>A1000007-0007-0007-0007-000000000007</key>
+		<dict>
+			<key>xpos</key>
+			<integer>50</integer>
+			<key>ypos</key>
+			<integer>710</integer>
+		</dict>
+		<key>A2000007-0007-0007-0007-000000000007</key>
+		<dict>
+			<key>xpos</key>
+			<integer>270</integer>
+			<key>ypos</key>
+			<integer>710</integer>
+		</dict>
+		<key>C1000007-0007-0007-0007-000000000007</key>
+		<dict>
+			<key>xpos</key>
+			<integer>490</integer>
+			<key>ypos</key>
+			<integer>710</integer>
+		</dict>
+		<key>D1000007-0007-0007-0007-000000000007</key>
+		<dict>
+			<key>xpos</key>
+			<integer>710</integer>
+			<key>ypos</key>
+			<integer>710</integer>
+		</dict>
+		<!-- URL Decode row -->
+		<key>A1000008-0008-0008-0008-000000000008</key>
+		<dict>
+			<key>xpos</key>
+			<integer>50</integer>
+			<key>ypos</key>
+			<integer>820</integer>
+		</dict>
+		<key>A2000008-0008-0008-0008-000000000008</key>
+		<dict>
+			<key>xpos</key>
+			<integer>270</integer>
+			<key>ypos</key>
+			<integer>820</integer>
+		</dict>
+		<key>C1000008-0008-0008-0008-000000000008</key>
+		<dict>
+			<key>xpos</key>
+			<integer>490</integer>
+			<key>ypos</key>
+			<integer>820</integer>
+		</dict>
+		<key>D1000008-0008-0008-0008-000000000008</key>
+		<dict>
+			<key>xpos</key>
+			<integer>710</integer>
+			<key>ypos</key>
+			<integer>820</integer>
+		</dict>
+		<!-- Lorem row -->
+		<key>A1000009-0009-0009-0009-000000000009</key>
+		<dict>
+			<key>xpos</key>
+			<integer>50</integer>
+			<key>ypos</key>
+			<integer>930</integer>
+		</dict>
+		<key>A2000009-0009-0009-0009-000000000009</key>
+		<dict>
+			<key>xpos</key>
+			<integer>270</integer>
+			<key>ypos</key>
+			<integer>930</integer>
+		</dict>
+		<key>C1000009-0009-0009-0009-000000000009</key>
+		<dict>
+			<key>xpos</key>
+			<integer>490</integer>
+			<key>ypos</key>
+			<integer>930</integer>
+		</dict>
+		<key>D1000009-0009-0009-0009-000000000009</key>
+		<dict>
+			<key>xpos</key>
+			<integer>710</integer>
+			<key>ypos</key>
+			<integer>930</integer>
+		</dict>
+		<!-- Hex row -->
+		<key>A100000A-000A-000A-000A-00000000000A</key>
+		<dict>
+			<key>xpos</key>
+			<integer>50</integer>
+			<key>ypos</key>
+			<integer>1040</integer>
+		</dict>
+		<key>A200000A-000A-000A-000A-00000000000A</key>
+		<dict>
+			<key>xpos</key>
+			<integer>270</integer>
+			<key>ypos</key>
+			<integer>1040</integer>
+		</dict>
+		<key>C100000A-000A-000A-000A-00000000000A</key>
+		<dict>
+			<key>xpos</key>
+			<integer>490</integer>
+			<key>ypos</key>
+			<integer>1040</integer>
+		</dict>
+		<key>D100000A-000A-000A-000A-00000000000A</key>
+		<dict>
+			<key>xpos</key>
+			<integer>710</integer>
+			<key>ypos</key>
+			<integer>1040</integer>
+		</dict>
+	</dict>
+	<key>version</key>
+	<string>1.0.0</string>
+	<key>webaddress</key>
+	<string></string>
+</dict>
+</plist>
