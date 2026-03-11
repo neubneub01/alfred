@@ -383,6 +383,7 @@ class PreCallRouter(CustomLogger):
             "stream": False,
             "format": "json",
             "options": {"temperature": 0.0, "num_predict": 128},
+        "keep_alive": "24h",
         }
 
         async with httpx.AsyncClient(timeout=ROUTER_TIMEOUT) as client:
