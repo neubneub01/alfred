@@ -1,0 +1,218 @@
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Tool Definitions — JSON schemas for LLM function calling
+# These are used to generate the "tools" array in gateway API calls
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+gateway_chat:
+  name: gateway_chat
+  description: >
+    Send a prompt to the AI gateway and get a response.
+    Use model='analyze' for complex reasoning, 'chat' for simple tasks,
+    'code' for programming questions.
+  parameters:
+    type: object
+    properties:
+      model:
+        type: string
+        description: "Gateway model alias: chat, analyze, code, summarize"
+        default: chat
+      prompt:
+        type: string
+        description: The user prompt to send
+      system:
+        type: string
+        description: Optional system prompt override
+    required:
+      - prompt
+
+context_load:
+  name: context_load
+  description: >
+    Load a markdown or text file from the context library. Use for career
+    documents, templates, homelab documentation, etc.
+  parameters:
+    type: object
+    properties:
+      path:
+        type: string
+        description: >
+          Relative path within the context library, e.g.
+          'career/resume-base.md' or 'homelab/00_index.md'
+    required:
+      - path
+
+ntfy:
+  name: ntfy
+  description: >
+    Send a push notification to the user. Use when a long-running task
+    completes or needs human attention.
+  parameters:
+    type: object
+    properties:
+      title:
+        type: string
+        description: Notification title
+      message:
+        type: string
+        description: Notification body text
+      priority:
+        type: integer
+        description: "Priority 1 (min) to 5 (urgent). Default 3."
+        default: 3
+        minimum: 1
+        maximum: 5
+    required:
+      - title
+      - message
+
+things_create:
+  name: things_create
+  description: >
+    Create a task in Things 3 via URL scheme. Returns the things:///json
+    URL for task creation.
+  parameters:
+    type: object
+    properties:
+      title:
+        type: string
+        description: Task title
+      notes:
+        type: string
+        description: Task notes or description
+      area:
+        type: string
+        description: "Things 3 area: Career, Finance & Admin, Fitness, Homelab, Personal, Tax & Advisory"
+      tags:
+        type: array
+        items:
+          type: string
+        description: List of tags to apply
+      deadline:
+        type: string
+        description: Deadline in YYYY-MM-DD format
+    required:
+      - title
+
+shell_exec:
+  name: shell_exec
+  description: >
+    Execute a whitelisted shell command for diagnostics. Only read-only
+    commands are allowed: curl -s, docker ps, docker logs --tail, df -h,
+    free -m, nvidia-smi, systemctl status, ping -c, cat /proc/
+  parameters:
+    type: object
+    properties:
+      command:
+        type: string
+        description: >
+          Shell command to execute. Must start with a whitelisted prefix.
+    required:
+      - command
+
+paperless_search:
+  name: paperless_search
+  description: >
+    Search documents in Paperless-ngx. Returns document titles, IDs,
+    correspondents, tags, and content previews matching the query.
+  parameters:
+    type: object
+    properties:
+      query:
+        type: string
+        description: Search query for document content or title
+      limit:
+        type: integer
+        description: "Max results to return (default 10)"
+        default: 10
+    required:
+      - query
+
+paperless_tag:
+  name: paperless_tag
+  description: >
+    Add tags to a document in Paperless-ngx by document ID.
+  parameters:
+    type: object
+    properties:
+      document_id:
+        type: integer
+        description: Paperless document ID
+      tags:
+        type: array
+        items:
+          type: integer
+        description: List of tag IDs to add to the document
+    required:
+      - document_id
+      - tags
+
+fastmail_search:
+  name: fastmail_search
+  description: >
+    Search emails in Fastmail. Returns subject, sender, date, and preview
+    of matching emails.
+  parameters:
+    type: object
+    properties:
+      query:
+        type: string
+        description: Search query (supports Fastmail search syntax)
+      limit:
+        type: integer
+        description: "Max results (default 10)"
+        default: 10
+    required:
+      - query
+
+fastmail_draft:
+  name: fastmail_draft
+  description: >
+    Create a draft email in Fastmail.
+  parameters:
+    type: object
+    properties:
+      to:
+        type: string
+        description: Recipient email address
+      subject:
+        type: string
+        description: Email subject line
+      body:
+        type: string
+        description: Email body text (plain text)
+    required:
+      - to
+      - subject
+      - body
+
+web_search:
+  name: web_search
+  description: >
+    Search the web for current information on a topic. Returns summarized
+    search results from SearXNG or the AI gateway.
+  parameters:
+    type: object
+    properties:
+      query:
+        type: string
+        description: The search query
+    required:
+      - query
+
+n8n_webhook:
+  name: n8n_webhook
+  description: >
+    Trigger an n8n workflow by calling its webhook endpoint. Pass the
+    webhook path and optional JSON data.
+  parameters:
+    type: object
+    properties:
+      webhook_path:
+        type: string
+        description: "Webhook path (not the full URL). Example: 'email-triage'"
+      data:
+        type: object
+        description: JSON payload to send to the webhook
+        additionalProperties: true
+    required:
+      - webhook_path

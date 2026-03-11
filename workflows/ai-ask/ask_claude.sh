@@ -3,13 +3,9 @@
 
 query="$1"
 
-# Alfred doesn't source shell profiles, so grab the key from there if not set
+# ANTHROPIC_API_KEY is set via Alfred workflow variables (info.plist)
 if [ -z "$ANTHROPIC_API_KEY" ]; then
-    ANTHROPIC_API_KEY=$(grep 'ANTHROPIC_API_KEY' "$HOME/.zshrc" 2>/dev/null | sed 's/.*="\(.*\)"/\1/' | tail -1)
-fi
-
-if [ -z "$ANTHROPIC_API_KEY" ]; then
-    echo "No API key found. Add 'export ANTHROPIC_API_KEY=\"sk-...\"' to ~/.zshrc"
+    echo "No API key. Set ANTHROPIC_API_KEY in Alfred workflow variables."
     exit 0
 fi
 

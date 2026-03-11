@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>bundleid</key>
+	<string>com.neub.alfred.ai-agent</string>
+	<key>category</key>
+	<string>Productivity</string>
+	<key>connections</key>
+	<dict>
+		<!-- research keyword → run_agent.sh (research) -->
+		<key>AG-KW01-BBBB-5001-C001-000000000001</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>AG-SC01-BBBB-5001-C001-000000000002</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<!-- taxprep keyword → run_agent.sh (tax_prep) -->
+		<key>AG-KW02-BBBB-5002-C002-000000000001</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>AG-SC02-BBBB-5002-C002-000000000002</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<!-- interview keyword → run_agent.sh (interview_prep) -->
+		<key>AG-KW03-BBBB-5003-C003-000000000001</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>AG-SC03-BBBB-5003-C003-000000000002</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<!-- research script → notification -->
+		<key>AG-SC01-BBBB-5001-C001-000000000002</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>AG-NF01-BBBB-5001-C001-000000000003</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<!-- taxprep script → notification -->
+		<key>AG-SC02-BBBB-5002-C002-000000000002</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>AG-NF01-BBBB-5001-C001-000000000003</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<!-- interview script → notification -->
+		<key>AG-SC03-BBBB-5003-C003-000000000002</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>AG-NF01-BBBB-5001-C001-000000000003</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+	</dict>
+	<key>createdby</key>
+	<string>neub</string>
+	<key>description</key>
+	<string>Fire-and-forget agent triggers — research, tax prep, interview prep</string>
+	<key>disabled</key>
+	<false/>
+	<key>name</key>
+	<string>AI Agent Triggers</string>
+	<key>objects</key>
+	<array>
+		<!-- ==================== RESEARCH — Research agent ==================== -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>keyword</key>
+				<string>research</string>
+				<key>subtext</key>
+				<string>Launch research agent — deep dive on a topic</string>
+				<key>text</key>
+				<string>Research Agent</string>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.keyword</string>
+			<key>uid</key>
+			<string>AG-KW01-BBBB-5001-C001-000000000001</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>bash run_agent.sh "research" "{query}"</string>
+				<key>scriptargtype</key>
+				<integer>0</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>AG-SC01-BBBB-5001-C001-000000000002</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<!-- ==================== TAXPREP — Tax prep agent ==================== -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>keyword</key>
+				<string>taxprep</string>
+				<key>subtext</key>
+				<string>Launch tax prep agent for a client</string>
+				<key>text</key>
+				<string>Tax Prep Agent</string>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.keyword</string>
+			<key>uid</key>
+			<string>AG-KW02-BBBB-5002-C002-000000000001</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>bash run_agent.sh "tax_prep" "{query}"</string>
+				<key>scriptargtype</key>
+				<integer>0</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>AG-SC02-BBBB-5002-C002-000000000002</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<!-- ==================== INTERVIEW — Interview prep agent ==================== -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>keyword</key>
+				<string>interview</string>
+				<key>subtext</key>
+				<string>Launch interview prep agent for a company</string>
+				<key>text</key>
+				<string>Interview Prep Agent</string>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.keyword</string>
+			<key>uid</key>
+			<string>AG-KW03-BBBB-5003-C003-000000000001</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>bash run_agent.sh "interview_prep" "{query}"</string>
+				<key>scriptargtype</key>
+				<integer>0</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>AG-SC03-BBBB-5003-C003-000000000002</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<!-- ==================== Shared Notification Output ==================== -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<true/>
+				<key>removeextension</key>
+				<false/>
+				<key>text</key>
+				<string>{query}</string>
+				<key>title</key>
+				<string>Agent Launched</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>AG-NF01-BBBB-5001-C001-000000000003</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+	</array>
+	<key>readme</key>
+	<string>AI Agent Triggers — Fire-and-forget agents running on your homelab.
+
+Keywords:
+  research {topic}   - Deep research agent
+  taxprep {client}   - Tax preparation agent
+  interview {company} - Interview prep agent
+
+Agents run asynchronously on 192.168.1.52:8100 — you get a notification when they start, and the agent service sends a notification when done.
+
+Setup:
+  LITELLM_MASTER_KEY - Gateway API key (auto-extracted from ~/.zshrc if not set)</string>
+	<key>uidata</key>
+	<dict>
+		<!-- research row -->
+		<key>AG-KW01-BBBB-5001-C001-000000000001</key>
+		<dict>
+			<key>xpos</key>
+			<real>100</real>
+			<key>ypos</key>
+			<real>50</real>
+		</dict>
+		<key>AG-SC01-BBBB-5001-C001-000000000002</key>
+		<dict>
+			<key>xpos</key>
+			<real>370</real>
+			<key>ypos</key>
+			<real>50</real>
+		</dict>
+		<!-- taxprep row -->
+		<key>AG-KW02-BBBB-5002-C002-000000000001</key>
+		<dict>
+			<key>xpos</key>
+			<real>100</real>
+			<key>ypos</key>
+			<real>200</real>
+		</dict>
+		<key>AG-SC02-BBBB-5002-C002-000000000002</key>
+		<dict>
+			<key>xpos</key>
+			<real>370</real>
+			<key>ypos</key>
+			<real>200</real>
+		</dict>
+		<!-- interview row -->
+		<key>AG-KW03-BBBB-5003-C003-000000000001</key>
+		<dict>
+			<key>xpos</key>
+			<real>100</real>
+			<key>ypos</key>
+			<real>350</real>
+		</dict>
+		<key>AG-SC03-BBBB-5003-C003-000000000002</key>
+		<dict>
+			<key>xpos</key>
+			<real>370</real>
+			<key>ypos</key>
+			<real>350</real>
+		</dict>
+		<!-- shared notification -->
+		<key>AG-NF01-BBBB-5001-C001-000000000003</key>
+		<dict>
+			<key>xpos</key>
+			<real>640</real>
+			<key>ypos</key>
+			<real>200</real>
+		</dict>
+	</dict>
+	<key>variables</key>
+	<dict>
+		<key>LITELLM_MASTER_KEY</key>
+		<string></string>
+	</dict>
+	<key>version</key>
+	<string>1.0.0</string>
+	<key>webaddress</key>
+	<string></string>
+</dict>
+</plist>

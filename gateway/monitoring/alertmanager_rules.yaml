@@ -1,0 +1,55 @@
+groups:
+  - name: ai-engine
+    rules:
+      - alert: GatewayDown
+        expr: up{job="ai-engine"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "AI gateway exporter is unreachable"
+          description: "The ai-engine Prometheus target has been down for more than 2 minutes."
+
+      - alert: RouterModelCold
+        expr: ai_router_model_loaded == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Router model is not responding"
+          description: "No requests logged in the last 5 minutes — the qwen3.5:4b classification model may be down or unloaded."
+
+      - alert: RouterLatencyDegraded
+        expr: ai_classification_latency_p95_ms > 1500
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Classification latency p95 exceeds 1500ms"
+          description: "The 95th percentile request latency has been above 1.5s for 5 minutes. Router model may be under memory pressure or VRAM-swapping."
+
+      - alert: EscalationRateHigh
+        expr: ai_escalation_rate > 0.25
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Escalation rate above 25% for alias {{ $labels.alias }}"
+          description: "More than 25% of requests for alias {{ $labels.alias }} are escalating to a fallback model. The primary model may need tuning or the validator threshold is too strict."
+
+      - alert: APICostSpike
+        expr: ai_daily_cost_dollars > 10
+        labels:
+          severity: warning
+        annotations:
+          summary: "Daily API cost has exceeded $10"
+          description: "Current daily spend is ${{ $value | printf \"%.2f\" }}. Check for runaway loops or unexpectedly large prompts."
+
+      - alert: FeedbackNegativeSpike
+        expr: rate(ai_feedback_negative_total[1h]) > 0.3
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High rate of negative feedback"
+          description: "Negative feedback rate is {{ $value | printf \"%.2f\" }}/sec over the last hour for alias {{ $labels.alias }}. Quality may be degraded."

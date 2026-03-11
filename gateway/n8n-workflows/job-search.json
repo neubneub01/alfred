@@ -1,0 +1,630 @@
+{
+  "name": "Job Search Pipeline — Score & Route",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "job-score",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook — POST /job-score",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, -120],
+      "webhookId": "job-score-webhook"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule — Every 6 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 120]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ JSON.stringify({\n  title: $json.body?.title || $json.title || 'Unknown Title',\n  company: $json.body?.company || $json.company || 'Unknown Company',\n  description: $json.body?.description || $json.description || '',\n  location: $json.body?.location || $json.location || 'Not specified',\n  url: $json.body?.url || $json.url || '',\n  source: 'webhook',\n  receivedAt: new Date().toISOString()\n}) }}",
+        "options": {}
+      },
+      "id": "normalize-webhook",
+      "name": "Normalize Webhook Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [260, -120]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.feedUrl || 'https://example.com/careers/feed.json' }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "fetch-job-feed",
+      "name": "Fetch Job Feed (Placeholder)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [260, 120],
+      "notes": "Replace URL with actual career page RSS/JSON feeds. Add multiple HTTP Request nodes for each target company. Compare against seen_jobs table to avoid duplicates.",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ JSON.stringify({\n  title: 'Schedule trigger placeholder — wire up job feed sources',\n  company: 'N/A',\n  description: '',\n  location: '',\n  url: '',\n  source: 'scheduled-feed',\n  receivedAt: new Date().toISOString()\n}) }}",
+        "options": {}
+      },
+      "id": "normalize-scheduled",
+      "name": "Normalize Scheduled Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [520, 120],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ JSON.stringify({\n  title: $json.title,\n  company: $json.company,\n  description: $json.description,\n  location: $json.location,\n  url: $json.url,\n  source: $json.source,\n  receivedAt: $json.receivedAt,\n  jobText: 'Title: ' + $json.title + '\\nCompany: ' + $json.company + '\\nLocation: ' + $json.location + '\\n\\nDescription:\\n' + $json.description\n}) }}",
+        "options": {}
+      },
+      "id": "prepare-for-scoring",
+      "name": "Prepare Job Text",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [520, -120]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-description",
+              "leftValue": "={{ $json.description?.length }}",
+              "rightValue": 10,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "check-valid-posting",
+      "name": "Valid Posting?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [740, -120]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:4000/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"model\": \"analyze\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a tax manager job evaluator. Score this job posting on a 0-100 scale using these factors:\\n\\n1. ASC 740 focus (0-25): Direct provision/tax accounting work scores highest. Explicit mention of income tax provision, deferred tax, ASC 740, tax accounting. Score 0 if none, 25 if primary focus.\\n2. Team leadership (0-15): Managing staff, mentoring. Established team, manager role, team of 5+. Score 0 if solo contributor, 15 if managing a team.\\n3. M&A / transaction experience (0-15): Deal-related tax, due diligence, transaction. Score 0 if none, 15 if significant.\\n4. Technology fit (0-10): OneSource, Alteryx, Power BI, modern tools, automation focus, data analytics. Score 0 if none, 10 if strong tech emphasis.\\n5. Location preference (0-10): Remote = 10, Houston = 8, Other TX = 6, hybrid in target metros = 5, onsite other = 3.\\n6. Seniority match (0-15): Manager/Senior Manager = 15, Director = 10, Staff/Senior = 7, VP/Partner = 5.\\n7. Company stability (0-10): Big4/large firms = 10, public/established = 8, mid-size = 5, startup = 2.\\n\\nReturn ONLY this JSON — no other text:\\n{\\\"score\\\": <0-100>, \\\"breakdown\\\": {\\\"asc740\\\": <0-25>, \\\"team_leadership\\\": <0-15>, \\\"ma_transaction\\\": <0-15>, \\\"technology\\\": <0-10>, \\\"location\\\": <0-10>, \\\"seniority\\\": <0-15>, \\\"stability\\\": <0-10>}, \\\"strengths\\\": [\\\"...\\\", \\\"...\\\"], \\\"concerns\\\": [\\\"...\\\", \\\"...\\\"], \\\"recommendation\\\": \\\"apply\\\" | \\\"skip\\\" | \\\"maybe\\\", \\\"summary\\\": \\\"<1-2 sentence summary>\\\"}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": $json.jobText\n    }\n  ],\n  \"temperature\": 0.1,\n  \"max_tokens\": 500\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "gateway-score",
+      "name": "Gateway — Score Job",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, -180],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "LITELLM_CREDENTIAL_ID",
+          "name": "LiteLLM Gateway Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const title = $('Prepare Job Text').item.json.title;\n  const company = $('Prepare Job Text').item.json.company;\n  const location = $('Prepare Job Text').item.json.location;\n  const url = $('Prepare Job Text').item.json.url;\n  const source = $('Prepare Job Text').item.json.source;\n  const receivedAt = $('Prepare Job Text').item.json.receivedAt;\n\n  let result;\n  try {\n    const content = $json.choices[0].message.content;\n    result = typeof content === 'string' ? JSON.parse(content) : content;\n  } catch(e) {\n    result = {\n      score: 0,\n      breakdown: { asc740: 0, team_leadership: 0, ma_transaction: 0, technology: 0, location: 0, seniority: 0, stability: 0 },\n      strengths: [],\n      concerns: ['Parse error: ' + e.message],\n      recommendation: 'skip',\n      summary: 'Failed to parse LLM response'\n    };\n  }\n\n  return JSON.stringify({\n    title,\n    company,\n    location,\n    url,\n    source,\n    receivedAt,\n    score: result.score || 0,\n    breakdown: result.breakdown || {},\n    strengths: result.strengths || [],\n    concerns: result.concerns || [],\n    recommendation: result.recommendation || 'skip',\n    summary: result.summary || ''\n  });\n})() }}",
+        "options": {}
+      },
+      "id": "parse-score",
+      "name": "Parse Score Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1180, -180]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.score }}",
+                    "rightValue": 80,
+                    "operator": {
+                      "type": "number",
+                      "operation": "gt"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "High Priority (>80)"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.score }}",
+                    "rightValue": 60,
+                    "operator": {
+                      "type": "number",
+                      "operation": "gte"
+                    }
+                  },
+                  {
+                    "leftValue": "={{ $json.score }}",
+                    "rightValue": 80,
+                    "operator": {
+                      "type": "number",
+                      "operation": "lte"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Maybe (60-80)"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.score }}",
+                    "rightValue": 60,
+                    "operator": {
+                      "type": "number",
+                      "operation": "lt"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Skip (<60)"
+            }
+          ],
+          "fallbackOutput": {
+            "active": false
+          }
+        },
+        "options": {
+          "allMatchingOutputs": false
+        }
+      },
+      "id": "route-by-score",
+      "name": "Route by Score",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [1400, -180]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.38:8090/jobs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Title",
+              "value": "={{ 'Hot Job: ' + $json.title + ' at ' + $json.company + ' (Score: ' + $json.score + ')' }}"
+            },
+            {
+              "name": "Priority",
+              "value": "5"
+            },
+            {
+              "name": "Tags",
+              "value": "job-search,high-priority,apply"
+            },
+            {
+              "name": "Click",
+              "value": "={{ $json.url }}"
+            },
+            {
+              "name": "Actions",
+              "value": "={{ 'view, Open Posting, ' + $json.url }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "string",
+        "body": "={{ '🔥 Score: ' + $json.score + '/100\\n\\n' + $json.summary + '\\n\\nStrengths: ' + $json.strengths.join(', ') + '\\n\\nBreakdown:\\n• ASC 740: ' + ($json.breakdown.asc740 || 0) + '/25\\n• Team: ' + ($json.breakdown.team_leadership || 0) + '/15\\n• M&A: ' + ($json.breakdown.ma_transaction || 0) + '/15\\n• Tech: ' + ($json.breakdown.technology || 0) + '/10\\n• Location: ' + ($json.breakdown.location || 0) + '/10\\n• Seniority: ' + ($json.breakdown.seniority || 0) + '/15\\n• Stability: ' + ($json.breakdown.stability || 0) + '/10\\n\\n' + $json.company + ' — ' + $json.location }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "ntfy-high-priority",
+      "name": "ntfy — High Priority Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1680, -360]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Create Things 3 task for high-priority job via URL scheme\n// Uses things:///json which is proven in Alfred things workflow\n\nconst item = $input.first().json;\n\nconst task = [\n  {\n    type: 'to-do',\n    attributes: {\n      title: `Apply: ${item.title} at ${item.company} (Score: ${item.score})`,\n      notes: [\n        item.summary,\n        '',\n        `Score: ${item.score}/100`,\n        `Recommendation: ${item.recommendation}`,\n        '',\n        'Score Breakdown:',\n        `• ASC 740: ${item.breakdown.asc740 || 0}/25`,\n        `• Team Leadership: ${item.breakdown.team_leadership || 0}/15`,\n        `• M&A: ${item.breakdown.ma_transaction || 0}/15`,\n        `• Technology: ${item.breakdown.technology || 0}/10`,\n        `• Location: ${item.breakdown.location || 0}/10`,\n        `• Seniority: ${item.breakdown.seniority || 0}/15`,\n        `• Stability: ${item.breakdown.stability || 0}/10`,\n        '',\n        `Strengths: ${(item.strengths || []).join(', ')}`,\n        `Concerns: ${(item.concerns || []).join(', ')}`,\n        '',\n        `Link: ${item.url}`,\n        `Source: ${item.source}`,\n        `Received: ${item.receivedAt}`\n      ].join('\\n'),\n      'list-id': 'Career',\n      tags: ['job-search', 'high-priority', `score-${Math.floor(item.score / 10) * 10}`],\n      deadline: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],\n      'checklist-items': [\n        { type: 'checklist-item', attributes: { title: 'Review full posting' } },\n        { type: 'checklist-item', attributes: { title: 'Tailor resume' } },\n        { type: 'checklist-item', attributes: { title: 'Write cover letter' } },\n        { type: 'checklist-item', attributes: { title: 'Submit application' } },\n        { type: 'checklist-item', attributes: { title: 'Log in tracker' } }\n      ]\n    }\n  }\n];\n\nconst thingsUrl = 'things:///json?data=' + encodeURIComponent(JSON.stringify(task));\n\nreturn [{\n  json: {\n    ...item,\n    thingsUrl,\n    thingsTask: task\n  }\n}];"
+      },
+      "id": "things-high-priority",
+      "name": "Things 3 — Apply Task",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1940, -360],
+      "notes": "Generates Things 3 URL scheme JSON. To execute on macOS, use an Execute Command node with: open \"$thingsUrl\" — or trigger via Alfred webhook."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.38:8090/jobs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Title",
+              "value": "={{ 'Maybe: ' + $json.title + ' at ' + $json.company + ' (Score: ' + $json.score + ')' }}"
+            },
+            {
+              "name": "Priority",
+              "value": "3"
+            },
+            {
+              "name": "Tags",
+              "value": "job-search,maybe"
+            },
+            {
+              "name": "Click",
+              "value": "={{ $json.url }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "string",
+        "body": "={{ 'Score: ' + $json.score + '/100 — ' + $json.recommendation + '\\n\\n' + $json.summary + '\\n\\nStrengths: ' + $json.strengths.join(', ') + '\\nConcerns: ' + $json.concerns.join(', ') + '\\n\\n' + $json.company + ' — ' + $json.location }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "ntfy-maybe",
+      "name": "ntfy — Maybe Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1680, -180]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Create Things 3 task for maybe-priority job\n\nconst item = $input.first().json;\n\nconst task = [\n  {\n    type: 'to-do',\n    attributes: {\n      title: `Review: ${item.title} at ${item.company} (Score: ${item.score})`,\n      notes: [\n        item.summary,\n        '',\n        `Score: ${item.score}/100`,\n        `Recommendation: ${item.recommendation}`,\n        '',\n        'Score Breakdown:',\n        `• ASC 740: ${item.breakdown.asc740 || 0}/25`,\n        `• Team Leadership: ${item.breakdown.team_leadership || 0}/15`,\n        `• M&A: ${item.breakdown.ma_transaction || 0}/15`,\n        `• Technology: ${item.breakdown.technology || 0}/10`,\n        `• Location: ${item.breakdown.location || 0}/10`,\n        `• Seniority: ${item.breakdown.seniority || 0}/15`,\n        `• Stability: ${item.breakdown.stability || 0}/10`,\n        '',\n        `Strengths: ${(item.strengths || []).join(', ')}`,\n        `Concerns: ${(item.concerns || []).join(', ')}`,\n        '',\n        `Link: ${item.url}`,\n        `Source: ${item.source}`\n      ].join('\\n'),\n      'list-id': 'Career',\n      tags: ['job-search', `score-${Math.floor(item.score / 10) * 10}`],\n      deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]\n    }\n  }\n];\n\nconst thingsUrl = 'things:///json?data=' + encodeURIComponent(JSON.stringify(task));\n\nreturn [{\n  json: {\n    ...item,\n    thingsUrl,\n    thingsTask: task\n  }\n}];"
+      },
+      "id": "things-maybe",
+      "name": "Things 3 — Review Task",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1940, -180],
+      "notes": "Creates a Things 3 'Review' task with 7-day deadline for maybe-score jobs."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log skipped job for analytics\nconst item = $input.first().json;\n\nconsole.log(JSON.stringify({\n  event: 'job_skipped',\n  title: item.title,\n  company: item.company,\n  score: item.score,\n  recommendation: item.recommendation,\n  concerns: item.concerns,\n  timestamp: new Date().toISOString()\n}));\n\nreturn [{\n  json: {\n    status: 'skipped',\n    title: item.title,\n    company: item.company,\n    score: item.score,\n    reason: item.concerns?.join('; ') || 'Score below threshold'\n  }\n}];"
+      },
+      "id": "log-skip",
+      "name": "Log — Skipped Job",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1680, 0]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({\n  status: 'scored',\n  title: $('Parse Score Result').item.json.title,\n  company: $('Parse Score Result').item.json.company,\n  score: $('Parse Score Result').item.json.score,\n  recommendation: $('Parse Score Result').item.json.recommendation,\n  breakdown: $('Parse Score Result').item.json.breakdown,\n  strengths: $('Parse Score Result').item.json.strengths,\n  concerns: $('Parse Score Result').item.json.concerns,\n  summary: $('Parse Score Result').item.json.summary\n}) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "respond-high",
+      "name": "Respond — High Priority",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2200, -360]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({\n  status: 'scored',\n  title: $('Parse Score Result').item.json.title,\n  company: $('Parse Score Result').item.json.company,\n  score: $('Parse Score Result').item.json.score,\n  recommendation: $('Parse Score Result').item.json.recommendation,\n  breakdown: $('Parse Score Result').item.json.breakdown,\n  summary: $('Parse Score Result').item.json.summary\n}) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "respond-maybe",
+      "name": "Respond — Maybe",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2200, -180]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({\n  status: 'skipped',\n  title: $('Parse Score Result').item.json.title,\n  company: $('Parse Score Result').item.json.company,\n  score: $('Parse Score Result').item.json.score,\n  reason: 'Below threshold'\n}) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "respond-skip",
+      "name": "Respond — Skipped",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2200, 0]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({\n  status: 'rejected',\n  reason: 'Invalid posting — description too short or missing'\n}) }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "respond-invalid",
+      "name": "Respond — Invalid Input",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [960, -60]
+    }
+  ],
+  "connections": {
+    "Webhook — POST /job-score": {
+      "main": [
+        [
+          {
+            "node": "Normalize Webhook Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule — Every 6 Hours": {
+      "main": [
+        [
+          {
+            "node": "Fetch Job Feed (Placeholder)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Job Feed (Placeholder)": {
+      "main": [
+        [
+          {
+            "node": "Normalize Scheduled Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Scheduled Input": {
+      "main": [
+        [
+          {
+            "node": "Prepare Job Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Webhook Input": {
+      "main": [
+        [
+          {
+            "node": "Prepare Job Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Job Text": {
+      "main": [
+        [
+          {
+            "node": "Valid Posting?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid Posting?": {
+      "main": [
+        [
+          {
+            "node": "Gateway — Score Job",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond — Invalid Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gateway — Score Job": {
+      "main": [
+        [
+          {
+            "node": "Parse Score Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Score Result": {
+      "main": [
+        [
+          {
+            "node": "Route by Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Score": {
+      "main": [
+        [
+          {
+            "node": "ntfy — High Priority Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ntfy — Maybe Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log — Skipped Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ntfy — High Priority Alert": {
+      "main": [
+        [
+          {
+            "node": "Things 3 — Apply Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Things 3 — Apply Task": {
+      "main": [
+        [
+          {
+            "node": "Respond — High Priority",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ntfy — Maybe Alert": {
+      "main": [
+        [
+          {
+            "node": "Things 3 — Review Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Things 3 — Review Task": {
+      "main": [
+        [
+          {
+            "node": "Respond — Maybe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log — Skipped Job": {
+      "main": [
+        [
+          {
+            "node": "Respond — Skipped",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "job-search"
+    },
+    {
+      "name": "phase-2"
+    },
+    {
+      "name": "s6"
+    }
+  ],
+  "triggerCount": 2,
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": ""
+  },
+  "notes": "## Job Search Pipeline (S6)\n\n### How to use\n\n**Webhook mode (primary):**\n```bash\ncurl -X POST http://<n8n-host>/webhook/job-score \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n    \"title\": \"Senior Tax Manager - ASC 740\",\n    \"company\": \"Deloitte\",\n    \"description\": \"Lead ASC 740 provision team of 8...\",\n    \"location\": \"Houston, TX (Hybrid)\",\n    \"url\": \"https://careers.deloitte.com/...\"\n  }'\n```\n\n**Schedule mode:** Enable the 'Fetch Job Feed' and 'Normalize Scheduled Input' nodes, configure career page URLs.\n\n### Routing\n- Score > 80: ntfy high-priority + Things 3 'Apply' task (3-day deadline, checklist)\n- Score 60-80: ntfy default + Things 3 'Review' task (7-day deadline)\n- Score < 60: Log only\n\n### Credentials needed\n- `LiteLLM Gateway Token`: HTTP Header Auth with Bearer token for the gateway at localhost:4000\n\n### ntfy\n- Topic: jobs @ http://192.168.1.38:8090\n- High priority notifications include score breakdown and click-to-open action\n\n### Things 3\n- Tasks created in 'Career' area with job-search tag\n- High-priority tasks include application checklist\n- Score decade tag (score-80, score-70, etc.) for filtering"
+}

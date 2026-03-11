@@ -1,7 +1,7 @@
 # Alfred Power Setup — Master Plan
 
 ## Vision
-Replace Raycast entirely. Alfred becomes the single command center for the entire Mac — launching, searching, automating, AI, dev tools, homelab, and daily productivity.
+Replace Raycast entirely. Alfred becomes the single command center for the entire Mac — launching, searching, automating, AI, dev tools, homelab, and daily productivity. Backed by a self-hosted AI gateway for intelligent routing, automation, and agentic workflows.
 
 ---
 
@@ -16,10 +16,39 @@ Core workflows installed and working.
 - [x] **IP Info** — `ip` → local/public IP, gateway, DNS, SSID
 - [x] **AI Quick Ask** — `ai` → ask Claude questions, Large Type response
 - [x] **Quick Search** — `g`, `gh`, `so`, `npm`, `yt`, `reddit`, `wiki`, `maps`, etc.
+- [x] **Things 3** — `do`, `things`, `find`, `plan`, `brainstorm`, `routine` → full Things 3 integration
 
-### Phase 1 Fixes Needed
-- [ ] Sync source repo → Alfred directory after edits (install.sh now copies, not symlinks)
-- [ ] Test all workflows end-to-end after restart
+---
+
+## AI Productivity Engine (DONE)
+Self-hosted AI gateway deployed to Host C LXC 102 (192.168.1.52).
+
+### Infrastructure
+- [x] LiteLLM Gateway — 9 model aliases, fallback chains, pre/post hooks (port 4000)
+- [x] Agent Service — FastAPI with 9 tools, 4 agents (port 8100)
+- [x] n8n — 5 workflows imported and activated (port 5678)
+- [x] Cloudflare Tunnel — `ai-gateway.neubneub.com` with Service Auth policy
+- [x] NFS Context Library — 21 files (career, homelab, tax-reference, templates)
+- [x] SQLite Logging — All gateway requests logged
+- [x] Validation Suite — 18/19 tests passing
+
+### n8n Workflows (Active)
+- [x] Email Triage (#100) — IMAP → LLM classify → priority routing → ntfy
+- [x] Job Search Pipeline (#101) — 7-factor scoring → route matches
+- [x] Notification Filter (#102) — Deterministic scoring + time gating → ntfy
+- [x] PBC Document Sorting (#103) — Classification + weekly gap analysis
+- [x] Music Library Automation (#104) — Nightly FLAC metadata + weekly albums
+
+### Credentials
+- [x] LiteLLM Gateway Token
+- [x] Fastmail IMAP (michael@neuberger.work)
+- [x] Paperless Token
+
+### Context Library (21 files on NFS)
+- [x] Career — resume, STAR stories, cover letters, target companies
+- [x] Homelab — architecture, GPU allocation, network map, troubleshooting
+- [x] Tax Reference — ASC 740, M-1/M-3, PBC checklist, deferred tax, provision workflow
+- [x] Templates — engagement letter, PBC request, workpaper, status update
 
 ---
 

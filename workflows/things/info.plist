@@ -1,0 +1,747 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>bundleid</key>
+	<string>com.neub.alfred.things</string>
+	<key>category</key>
+	<string>Productivity</string>
+	<key>connections</key>
+	<dict>
+		<!-- do keyword → do_task.sh script -->
+		<key>A1B2C3D4-E5F6-4A1B-8C2D-E3F4A5B6C7D8</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>B2C3D4E5-F6A7-4B1C-9D2E-F3A4B5C6D7E8</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<!-- do_task.sh script → notification -->
+		<key>B2C3D4E5-F6A7-4B1C-9D2E-F3A4B5C6D7E8</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>C3D4E5F6-A7B8-4C1D-AE2F-A3B4C5D6E7F8</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<!-- things script filter → open URL -->
+		<key>D4E5F6A7-B8C9-4D1E-BF30-B4C5D6E7F8A9</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>E5F6A7B8-C9D0-4E1F-C041-C5D6E7F8A9B0</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<!-- find keyword → open URL -->
+		<key>F6A7B8C9-D0E1-4F20-D152-D6E7F8A9B0C1</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>A7B8C9D0-E1F2-4031-E263-E7F8A9B0C1D2</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<!-- plan keyword → plan_project.sh script -->
+		<key>B8C9D0E1-F2A3-4142-F374-F8A9B0C1D2E3</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>C9D0E1F2-A3B4-4253-A485-A9B0C1D2E3F4</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<!-- plan_project.sh → notification -->
+		<key>C9D0E1F2-A3B4-4253-A485-A9B0C1D2E3F4</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>D0E1F2A3-B4C5-4364-B596-B0C1D2E3F4A5</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<!-- brainstorm keyword → plan_ai.sh script -->
+		<key>E1F2A3B4-C5D6-4475-C6A7-C1D2E3F4A5B6</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>F2A3B4C5-D6E7-4586-D7B8-D2E3F4A5B6C7</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<!-- plan_ai.sh → large type + notification -->
+		<key>F2A3B4C5-D6E7-4586-D7B8-D2E3F4A5B6C7</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>A3B4C5D6-E7F8-4697-E8C9-E3F4A5B6C7D8</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+			<dict>
+				<key>destinationuid</key>
+				<string>B4C5D6E7-F8A9-47A8-F9D0-F4A5B6C7D8E9</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<!-- routine script filter → run_routine.sh script -->
+		<key>C5D6E7F8-A9B0-48B9-A0E1-A5B6C7D8E9F0</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>D6E7F8A9-B0C1-49CA-B1F2-B6C7D8E9F0A1</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<!-- run_routine.sh → notification -->
+		<key>D6E7F8A9-B0C1-49CA-B1F2-B6C7D8E9F0A1</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>E7F8A9B0-C1D2-4ADB-C2A3-C7D8E9F0A1B2</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+	</dict>
+	<key>createdby</key>
+	<string>neub</string>
+	<key>description</key>
+	<string>Things 3 command center — capture, navigate, plan, and automate</string>
+	<key>disabled</key>
+	<false/>
+	<key>name</key>
+	<string>Things 3</string>
+	<key>objects</key>
+	<array>
+		<!-- ==================== DO — Quick Capture ==================== -->
+		<!-- do keyword input -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>keyword</key>
+				<string>do</string>
+				<key>subtext</key>
+				<string>Capture a task — modifiers: @today @tonight @tomorrow !deadline #tag</string>
+				<key>text</key>
+				<string>Do — Quick Capture</string>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.keyword</string>
+			<key>uid</key>
+			<string>A1B2C3D4-E5F6-4A1B-8C2D-E3F4A5B6C7D8</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<!-- do_task.sh script action -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>0</integer>
+				<key>script</key>
+				<string></string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string>do_task.sh</string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>B2C3D4E5-F6A7-4B1C-9D2E-F3A4B5C6D7E8</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<!-- do notification output -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<true/>
+				<key>removeextension</key>
+				<false/>
+				<key>text</key>
+				<string>{query}</string>
+				<key>title</key>
+				<string>Added to Things</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>C3D4E5F6-A7B8-4C1D-AE2F-A3B4C5D6E7F8</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<!-- ==================== THINGS — Navigate ==================== -->
+		<!-- things script filter input -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>alfredfiltersresults</key>
+				<false/>
+				<key>alfredfiltersresultsmatchmode</key>
+				<integer>0</integer>
+				<key>argumenttype</key>
+				<integer>1</integer>
+				<key>escaping</key>
+				<integer>0</integer>
+				<key>keyword</key>
+				<string>things</string>
+				<key>queuedelaycustom</key>
+				<integer>3</integer>
+				<key>queuedelayimmediatelyalinitially</key>
+				<true/>
+				<key>queuedelaymode</key>
+				<integer>0</integer>
+				<key>queuemode</key>
+				<integer>1</integer>
+				<key>runningsubtext</key>
+				<string>Loading views...</string>
+				<key>script</key>
+				<string></string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string>things_navigate.sh</string>
+				<key>subtext</key>
+				<string>Navigate Things 3 — views and areas</string>
+				<key>title</key>
+				<string>Things — Navigate</string>
+				<key>type</key>
+				<integer>0</integer>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.scriptfilter</string>
+			<key>uid</key>
+			<string>D4E5F6A7-B8C9-4D1E-BF30-B4C5D6E7F8A9</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<!-- things open URL action -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>browser</key>
+				<string></string>
+				<key>spaces</key>
+				<string></string>
+				<key>url</key>
+				<string>{query}</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.openurl</string>
+			<key>uid</key>
+			<string>E5F6A7B8-C9D0-4E1F-C041-C5D6E7F8A9B0</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<!-- ==================== FIND — Search ==================== -->
+		<!-- find keyword input -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>keyword</key>
+				<string>find</string>
+				<key>subtext</key>
+				<string>Search Things 3 for '{query}'</string>
+				<key>text</key>
+				<string>Find — Search Things</string>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.keyword</string>
+			<key>uid</key>
+			<string>F6A7B8C9-D0E1-4F20-D152-D6E7F8A9B0C1</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<!-- find open URL action -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>browser</key>
+				<string></string>
+				<key>spaces</key>
+				<string></string>
+				<key>url</key>
+				<string>things:///search?query={query}</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.openurl</string>
+			<key>uid</key>
+			<string>A7B8C9D0-E1F2-4031-E263-E7F8A9B0C1D2</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<!-- ==================== PLAN — Create Project ==================== -->
+		<!-- plan keyword input -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>keyword</key>
+				<string>plan</string>
+				<key>subtext</key>
+				<string>Create a project — use / for tasks: plan Name / Task 1, Task 2</string>
+				<key>text</key>
+				<string>Plan — Create Project</string>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.keyword</string>
+			<key>uid</key>
+			<string>B8C9D0E1-F2A3-4142-F374-F8A9B0C1D2E3</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<!-- plan_project.sh script action -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>0</integer>
+				<key>script</key>
+				<string></string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string>plan_project.sh</string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>C9D0E1F2-A3B4-4253-A485-A9B0C1D2E3F4</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<!-- plan notification output -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<true/>
+				<key>removeextension</key>
+				<false/>
+				<key>text</key>
+				<string>{query}</string>
+				<key>title</key>
+				<string>Project Created</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>D0E1F2A3-B4C5-4364-B596-B0C1D2E3F4A5</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<!-- ==================== BRAINSTORM — AI Project Planning ==================== -->
+		<!-- brainstorm keyword input -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>keyword</key>
+				<string>brainstorm</string>
+				<key>subtext</key>
+				<string>Claude breaks your goal into a full Things project</string>
+				<key>text</key>
+				<string>Brainstorm — AI Project Planner</string>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.keyword</string>
+			<key>uid</key>
+			<string>E1F2A3B4-C5D6-4475-C6A7-C1D2E3F4A5B6</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<!-- plan_ai.sh script action -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>0</integer>
+				<key>script</key>
+				<string></string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string>plan_ai.sh</string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>F2A3B4C5-D6E7-4586-D7B8-D2E3F4A5B6C7</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<!-- brainstorm large type output -->
+		<dict>
+			<key>config</key>
+			<dict/>
+			<key>type</key>
+			<string>alfred.workflow.output.largetype</string>
+			<key>uid</key>
+			<string>A3B4C5D6-E7F8-4697-E8C9-E3F4A5B6C7D8</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<!-- brainstorm notification output -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<true/>
+				<key>removeextension</key>
+				<false/>
+				<key>text</key>
+				<string>{query}</string>
+				<key>title</key>
+				<string>Brainstorm Complete</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>B4C5D6E7-F8A9-47A8-F9D0-F4A5B6C7D8E9</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<!-- ==================== ROUTINE — Templates ==================== -->
+		<!-- routine script filter input -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>alfredfiltersresults</key>
+				<false/>
+				<key>alfredfiltersresultsmatchmode</key>
+				<integer>0</integer>
+				<key>argumenttype</key>
+				<integer>1</integer>
+				<key>escaping</key>
+				<integer>0</integer>
+				<key>keyword</key>
+				<string>routine</string>
+				<key>queuedelaycustom</key>
+				<integer>3</integer>
+				<key>queuedelayimmediatelyalinitially</key>
+				<true/>
+				<key>queuedelaymode</key>
+				<integer>0</integer>
+				<key>queuemode</key>
+				<integer>1</integer>
+				<key>runningsubtext</key>
+				<string>Loading routines...</string>
+				<key>script</key>
+				<string></string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string>routine_filter.sh</string>
+				<key>subtext</key>
+				<string>Fire a routine template into Things 3</string>
+				<key>title</key>
+				<string>Routine — Templates</string>
+				<key>type</key>
+				<integer>0</integer>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.scriptfilter</string>
+			<key>uid</key>
+			<string>C5D6E7F8-A9B0-48B9-A0E1-A5B6C7D8E9F0</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<!-- run_routine.sh script action -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>0</integer>
+				<key>script</key>
+				<string></string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string>run_routine.sh</string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>D6E7F8A9-B0C1-49CA-B1F2-B6C7D8E9F0A1</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<!-- routine notification output -->
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<true/>
+				<key>removeextension</key>
+				<false/>
+				<key>text</key>
+				<string>{query}</string>
+				<key>title</key>
+				<string>Routine Created</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>E7F8A9B0-C1D2-4ADB-C2A3-C7D8E9F0A1B2</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+	</array>
+	<key>readme</key>
+	<string>Things 3 Command Center — Capture, navigate, plan, and automate.
+
+Keywords:
+  do {task}        - Quick capture (modifiers: @today @tonight @tomorrow @someday !deadline #tag)
+  things           - Navigate views and Areas
+  find {query}     - Search Things
+  plan {name}      - Create project (optional: plan Name / Task 1, Task 2)
+  brainstorm {goal} - AI decomposes goal into full Things project (needs API key)
+  routine          - Fire routine templates (Weekly Review, Morning Launch, etc.)
+
+Setup:
+  ANTHROPIC_API_KEY  - Your Anthropic API key (for brainstorm)
+  THINGS_AUTH_TOKEN  - Your Things URL scheme auth token
+  MODEL              - Claude model (default: claude-sonnet-4-20250514)</string>
+	<key>uidata</key>
+	<dict>
+		<!-- do row -->
+		<key>A1B2C3D4-E5F6-4A1B-8C2D-E3F4A5B6C7D8</key>
+		<dict>
+			<key>xpos</key>
+			<real>100</real>
+			<key>ypos</key>
+			<real>50</real>
+		</dict>
+		<key>B2C3D4E5-F6A7-4B1C-9D2E-F3A4B5C6D7E8</key>
+		<dict>
+			<key>xpos</key>
+			<real>370</real>
+			<key>ypos</key>
+			<real>50</real>
+		</dict>
+		<key>C3D4E5F6-A7B8-4C1D-AE2F-A3B4C5D6E7F8</key>
+		<dict>
+			<key>xpos</key>
+			<real>640</real>
+			<key>ypos</key>
+			<real>50</real>
+		</dict>
+		<!-- things row -->
+		<key>D4E5F6A7-B8C9-4D1E-BF30-B4C5D6E7F8A9</key>
+		<dict>
+			<key>xpos</key>
+			<real>100</real>
+			<key>ypos</key>
+			<real>200</real>
+		</dict>
+		<key>E5F6A7B8-C9D0-4E1F-C041-C5D6E7F8A9B0</key>
+		<dict>
+			<key>xpos</key>
+			<real>370</real>
+			<key>ypos</key>
+			<real>200</real>
+		</dict>
+		<!-- find row -->
+		<key>F6A7B8C9-D0E1-4F20-D152-D6E7F8A9B0C1</key>
+		<dict>
+			<key>xpos</key>
+			<real>100</real>
+			<key>ypos</key>
+			<real>350</real>
+		</dict>
+		<key>A7B8C9D0-E1F2-4031-E263-E7F8A9B0C1D2</key>
+		<dict>
+			<key>xpos</key>
+			<real>370</real>
+			<key>ypos</key>
+			<real>350</real>
+		</dict>
+		<!-- plan row -->
+		<key>B8C9D0E1-F2A3-4142-F374-F8A9B0C1D2E3</key>
+		<dict>
+			<key>xpos</key>
+			<real>100</real>
+			<key>ypos</key>
+			<real>500</real>
+		</dict>
+		<key>C9D0E1F2-A3B4-4253-A485-A9B0C1D2E3F4</key>
+		<dict>
+			<key>xpos</key>
+			<real>370</real>
+			<key>ypos</key>
+			<real>500</real>
+		</dict>
+		<key>D0E1F2A3-B4C5-4364-B596-B0C1D2E3F4A5</key>
+		<dict>
+			<key>xpos</key>
+			<real>640</real>
+			<key>ypos</key>
+			<real>500</real>
+		</dict>
+		<!-- brainstorm row -->
+		<key>E1F2A3B4-C5D6-4475-C6A7-C1D2E3F4A5B6</key>
+		<dict>
+			<key>xpos</key>
+			<real>100</real>
+			<key>ypos</key>
+			<real>650</real>
+		</dict>
+		<key>F2A3B4C5-D6E7-4586-D7B8-D2E3F4A5B6C7</key>
+		<dict>
+			<key>xpos</key>
+			<real>370</real>
+			<key>ypos</key>
+			<real>650</real>
+		</dict>
+		<key>A3B4C5D6-E7F8-4697-E8C9-E3F4A5B6C7D8</key>
+		<dict>
+			<key>xpos</key>
+			<real>640</real>
+			<key>ypos</key>
+			<real>620</real>
+		</dict>
+		<key>B4C5D6E7-F8A9-47A8-F9D0-F4A5B6C7D8E9</key>
+		<dict>
+			<key>xpos</key>
+			<real>640</real>
+			<key>ypos</key>
+			<real>690</real>
+		</dict>
+		<!-- routine row -->
+		<key>C5D6E7F8-A9B0-48B9-A0E1-A5B6C7D8E9F0</key>
+		<dict>
+			<key>xpos</key>
+			<real>100</real>
+			<key>ypos</key>
+			<real>830</real>
+		</dict>
+		<key>D6E7F8A9-B0C1-49CA-B1F2-B6C7D8E9F0A1</key>
+		<dict>
+			<key>xpos</key>
+			<real>370</real>
+			<key>ypos</key>
+			<real>830</real>
+		</dict>
+		<key>E7F8A9B0-C1D2-4ADB-C2A3-C7D8E9F0A1B2</key>
+		<dict>
+			<key>xpos</key>
+			<real>640</real>
+			<key>ypos</key>
+			<real>830</real>
+		</dict>
+	</dict>
+	<key>variables</key>
+	<dict>
+		<key>ANTHROPIC_API_KEY</key>
+		<string>YOUR_API_KEY_HERE</string>
+		<key>MODEL</key>
+		<string>claude-sonnet-4-20250514</string>
+		<key>THINGS_AUTH_TOKEN</key>
+		<string>YOUR_THINGS_TOKEN_HERE</string>
+	</dict>
+	<key>version</key>
+	<string>1.0.0</string>
+	<key>webaddress</key>
+	<string></string>
+</dict>
+</plist>

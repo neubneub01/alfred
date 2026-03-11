@@ -1,0 +1,249 @@
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# LiteLLM Gateway — AI Productivity Engine
+# Host C LXC 102 (192.168.1.52:4000)
+# Deploy to: /opt/litellm/config.yaml
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  # No database_url — LiteLLM proxy uses Prisma/PostgreSQL internally.
+  # Our custom logging uses SQLite via the post-call hook (hooks/post_call.py).
+
+litellm_settings:
+  drop_params: true
+  set_verbose: false
+  num_retries: 0          # Retries handled by fallback chains, not per-model retry
+  request_timeout: 120
+  merge_reasoning_content_in_choices: true   # qwen3.5 thinking mode support
+  # cache: true  # Requires Redis — enable after Redis is deployed
+  callbacks: ["hooks.pre_call.pre_call_router", "hooks.post_call.post_call_handler"]
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Model List
+#
+# Each alias has its primary model defined inline.
+# Fallback models are defined separately and
+# referenced in router_settings.fallbacks.
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+model_list:
+
+  # ── Alias: code ──────────────────────────────────
+  # Coding, debugging, code review
+  # Chain: Claude Sonnet 4.6 → GPT-5 → qwen3.5:27b
+  - model_name: code
+    litellm_params:
+      model: claude-sonnet-4-6
+      api_key: os.environ/ANTHROPIC_API_KEY
+      max_tokens: 8192
+
+
+  # ── Alias: analyze ──────────────────────────────
+  # Tax/finance reasoning, complex analysis
+  # Chain: Claude Opus 4.6 → Gemini 3.1 Pro → qwen3.5:27b
+  - model_name: analyze
+    litellm_params:
+      model: claude-opus-4-6
+      api_key: os.environ/ANTHROPIC_API_KEY
+      max_tokens: 8192
+
+
+  # ── Alias: agent ─────────────────────────────────
+  # Multi-step tool-use workflows
+  # Chain: Claude Sonnet 4.6 → GPT-5 → qwen3.5:27b
+  - model_name: agent
+    litellm_params:
+      model: claude-sonnet-4-6
+      api_key: os.environ/ANTHROPIC_API_KEY
+      max_tokens: 16384
+
+
+  # ── Alias: long-context ─────────────────────────
+  # Documents > 30k tokens
+  # Chain: Gemini 3.1 Pro → Claude Sonnet 4.6
+  - model_name: long-context
+    litellm_params:
+      model: gemini/gemini-3.1-pro-preview
+      api_key: os.environ/GEMINI_API_KEY
+      max_tokens: 8192
+
+
+  # ── Alias: chat ──────────────────────────────────
+  # Simple conversation, rewriting
+  # Chain: GPT-5 mini → Gemini 3 Flash → qwen3.5:9b
+  - model_name: chat
+    litellm_params:
+      model: gpt-5-mini
+      api_key: os.environ/OPENAI_API_KEY
+      max_tokens: 8192
+
+
+  # ── Alias: summarize ─────────────────────────────
+  # Meeting notes, document summaries
+  # Chain: qwen3.5:9b (5060 Ti) → qwen3.5:27b (4090) → Claude Sonnet 4.6
+  - model_name: summarize
+    litellm_params:
+      model: ollama/qwen3.5:9b
+      api_base: http://192.168.1.50:11434
+      max_tokens: 8192
+      thinking: {"type": "disabled"}
+
+
+  # ── Alias: batch-triage ──────────────────────────
+  # Classification at scale — email, jobs, alerts
+  # Chain: qwen3.5:9b (5060 Ti) → qwen3.5:27b (4090) → GPT-5 mini
+  - model_name: batch-triage
+    litellm_params:
+      model: ollama/qwen3.5:9b
+      api_base: http://192.168.1.50:11434
+      max_tokens: 8192
+      thinking: {"type": "disabled"}
+
+
+  # ── Alias: vision ────────────────────────────────
+  # Image/screenshot analysis, OCR
+  # Chain: Gemini 3 Flash → GPT-5 mini → qwen3.5:9b
+  - model_name: vision
+    litellm_params:
+      model: gemini/gemini-3-flash-preview
+      api_key: os.environ/GEMINI_API_KEY
+      max_tokens: 8192
+
+
+  # ── Alias: private ──────────────────────────────
+  # Sensitive data — never leaves LAN
+  # Chain: qwen3.5:27b (4090) → qwen3.5:9b (5060 Ti) → STOP
+  - model_name: private
+    litellm_params:
+      model: ollama/qwen3.5:27b
+      api_base: http://192.168.1.220:11434
+      max_tokens: 8192
+      thinking: {"type": "disabled"}
+
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # Fallback Model Deployments
+  # Referenced by router_settings.fallbacks below
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  # ── Cloud fallbacks ─────────────────────────────
+
+  - model_name: fb/claude-sonnet
+    litellm_params:
+      model: claude-sonnet-4-6
+      api_key: os.environ/ANTHROPIC_API_KEY
+      max_tokens: 8192
+
+
+  - model_name: fb/gpt-5
+    litellm_params:
+      model: gpt-5
+      api_key: os.environ/OPENAI_API_KEY
+      max_tokens: 8192
+
+
+  - model_name: fb/gpt-5-mini
+    litellm_params:
+      model: gpt-5-mini
+      api_key: os.environ/OPENAI_API_KEY
+      max_tokens: 8192
+
+
+  - model_name: fb/gemini-pro
+    litellm_params:
+      model: gemini/gemini-3.1-pro-preview
+      api_key: os.environ/GEMINI_API_KEY
+      max_tokens: 8192
+
+
+  - model_name: fb/gemini-flash
+    litellm_params:
+      model: gemini/gemini-3-flash-preview
+      api_key: os.environ/GEMINI_API_KEY
+      max_tokens: 8192
+
+
+  # ── Local Ollama fallbacks ──────────────────────
+
+  - model_name: fb/ollama-qwen27b
+    litellm_params:
+      model: ollama/qwen3.5:27b
+      api_base: http://192.168.1.220:11434
+      max_tokens: 8192
+      thinking: {"type": "disabled"}
+
+
+  - model_name: fb/ollama-qwen9b
+    litellm_params:
+      model: ollama/qwen3.5:9b
+      api_base: http://192.168.1.50:11434
+      max_tokens: 8192
+      thinking: {"type": "disabled"}
+
+
+  # ── Router model (classification) ──────────────
+  # Used by pre-call hook, not client-facing
+  - model_name: router
+    litellm_params:
+      model: ollama/qwen3.5:4b
+      api_base: http://192.168.1.41:11434
+      max_tokens: 256
+
+
+  # ── Passthrough cloud models ───────────────────
+  # For explicit model requests (bypass routing)
+
+  - model_name: claude-sonnet-4-6
+    litellm_params:
+      model: claude-sonnet-4-6
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: claude-opus-4-6
+    litellm_params:
+      model: claude-opus-4-6
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: gpt-5
+    litellm_params:
+      model: gpt-5
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: gpt-5-mini
+    litellm_params:
+      model: gpt-5-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: gemini-3.1-pro
+    litellm_params:
+      model: gemini/gemini-3.1-pro-preview
+      api_key: os.environ/GEMINI_API_KEY
+
+  - model_name: gemini-3.0-flash
+    litellm_params:
+      model: gemini/gemini-3-flash-preview
+      api_key: os.environ/GEMINI_API_KEY
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Router Settings
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+router_settings:
+  routing_strategy: simple-shuffle
+  enable_pre_call_checks: true
+
+  # Fallback chains per alias
+  # On primary failure → Fallback 1 → Fallback 2
+  fallbacks:
+    - code:          ["fb/gpt-5", "fb/ollama-qwen27b"]
+    - analyze:       ["fb/gemini-pro", "fb/ollama-qwen27b"]
+    - agent:         ["fb/gpt-5", "fb/ollama-qwen27b"]
+    - long-context:  ["fb/claude-sonnet"]
+    - chat:          ["fb/gemini-flash", "fb/ollama-qwen9b"]
+    - summarize:     ["fb/ollama-qwen27b", "fb/claude-sonnet"]
+    - batch-triage:  ["fb/ollama-qwen27b", "fb/gpt-5-mini"]
+    - vision:        ["fb/gpt-5-mini", "fb/ollama-qwen9b"]
+    - private:       ["fb/ollama-qwen9b"]
+
+  # Health check — skip dead backends (burst nodes)
+  allowed_fails: 3
+  cooldown_time: 60

@@ -1,0 +1,222 @@
+{
+  "id": "102",
+  "name": "Notification Filter — Score & Gate Alerts",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "notification-filter",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook — POST /notification-filter",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300],
+      "webhookId": "notification-filter-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract and normalize alert data\n// Supports Alertmanager format and generic webhook format\n\nconst items = [];\n\nfor (const item of $input.all()) {\n  const raw = item.json.body || item.json;\n\n  let source = 'unknown';\n  let type = 'generic';\n  let message = '';\n  let severity = 'info';\n  let labels = {};\n  let rawPayload = raw;\n\n  // --- Alertmanager format ---\n  // Alertmanager sends { alerts: [ { status, labels, annotations, ... } ] }\n  if (raw.alerts && Array.isArray(raw.alerts)) {\n    for (const alert of raw.alerts) {\n      const alertLabels = alert.labels || {};\n      const annotations = alert.annotations || {};\n\n      source = 'alertmanager';\n      type = alertLabels.alertname || alertLabels.type || 'prometheus-alert';\n      severity = alertLabels.severity || alert.status || 'warning';\n      message = annotations.summary\n        || annotations.description\n        || annotations.message\n        || `${type}: ${alertLabels.instance || 'unknown instance'}`;\n\n      items.push({\n        json: {\n          source,\n          type,\n          message,\n          severity,\n          labels: alertLabels,\n          status: alert.status || 'firing',\n          startsAt: alert.startsAt || new Date().toISOString(),\n          receivedAt: new Date().toISOString(),\n          rawPayload: alert\n        }\n      });\n    }\n    return items;\n  }\n\n  // --- Generic webhook format ---\n  // Expects: { source, type, message, severity, ... }\n  source = raw.source || raw.Source || raw.origin || 'unknown';\n  type = raw.type || raw.Type || raw.event || raw.alertname || 'generic';\n  message = raw.message || raw.Message || raw.msg || raw.text || raw.description || JSON.stringify(raw).substring(0, 500);\n  severity = raw.severity || raw.Severity || raw.level || raw.priority || 'info';\n  labels = raw.labels || {};\n\n  // --- n8n internal event format ---\n  if (raw.executionId || raw.workflowId) {\n    source = 'n8n';\n    type = raw.event || (raw.success === false ? 'workflow_failure' : 'workflow_event');\n    message = raw.message || `Workflow ${raw.workflowName || raw.workflowId || 'unknown'}: ${type}`;\n    severity = raw.success === false ? 'error' : (raw.severity || 'info');\n  }\n\n  items.push({\n    json: {\n      source,\n      type,\n      message,\n      severity,\n      labels,\n      status: raw.status || 'firing',\n      startsAt: raw.startsAt || raw.timestamp || new Date().toISOString(),\n      receivedAt: new Date().toISOString(),\n      rawPayload\n    }\n  });\n}\n\nreturn items;"
+      },
+      "id": "extract-normalize",
+      "name": "Extract & Normalize Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [280, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Deterministic scoring — no LLM needed\n//\n// Score 5 (Critical): Service down > 5 min, LXC/container crashed, Gateway unreachable\n// Score 4 (High):     Disk > 85%, GPU temp > 85C, Workflow failure, Job match > 80\n// Score 3 (Medium):   Escalation rate > 25%, API cost > $10/day, High-priority email\n// Score 2 (Low):      Transient CPU spikes, Watchtower updates, Scheduled restarts\n// Score 1 (Noise):    Successful routine runs, Brief latency spikes\n\nconst items = [];\n\nfor (const item of $input.all()) {\n  const { source, type, message, severity, labels, status } = item.json;\n\n  const msgLower = (message || '').toLowerCase();\n  const typeLower = (type || '').toLowerCase();\n  const sevLower = (severity || '').toLowerCase();\n  const combined = `${typeLower} ${msgLower} ${sevLower}`;\n\n  let score = 1;\n  let reason = 'Default: noise / routine';\n\n  // ── Score 5 (Critical) ──────────────────────────────────\n  // Service down > 5 min\n  if (/service.*(down|unreachable|offline)/i.test(combined) && !/resolved|recovering/i.test(combined)) {\n    score = 5;\n    reason = 'Service down or unreachable';\n  }\n  // LXC / container crashed\n  else if (/lxc.*(crash|stopped|dead|fail)|container.*(crash|oom|killed|exited)/i.test(combined)) {\n    score = 5;\n    reason = 'LXC or container crashed';\n  }\n  // Gateway unreachable\n  else if (/gateway.*(unreachable|down|timeout|fail)/i.test(combined)) {\n    score = 5;\n    reason = 'Gateway unreachable';\n  }\n  // Severity critical from Alertmanager\n  else if (sevLower === 'critical' || sevLower === 'fatal') {\n    score = 5;\n    reason = `Severity marked as ${severity}`;\n  }\n  // Node down\n  else if (/node.*(down|unreachable|offline)/i.test(combined)) {\n    score = 5;\n    reason = 'Node down';\n  }\n\n  // ── Score 4 (High) ──────────────────────────────────────\n  // Disk > 85%\n  else if (/disk/i.test(combined)) {\n    const pctMatch = combined.match(/(\\d+)\\s*%/);\n    if (pctMatch && parseInt(pctMatch[1], 10) > 85) {\n      score = 4;\n      reason = `Disk usage ${pctMatch[1]}% (>85%)`;\n    } else if (/full|critical|high/i.test(combined)) {\n      score = 4;\n      reason = 'Disk usage high';\n    }\n  }\n  // GPU temp > 85C\n  else if (/gpu.*(temp|thermal)/i.test(combined)) {\n    const tempMatch = combined.match(/(\\d+)\\s*[°c]/i) || combined.match(/temp.*?(\\d+)/i);\n    if (tempMatch && parseInt(tempMatch[1], 10) > 85) {\n      score = 4;\n      reason = `GPU temperature ${tempMatch[1]}C (>85C)`;\n    }\n  }\n  // Workflow failure\n  else if (/workflow.*(fail|error|crash)|execution.*fail/i.test(combined) || (source === 'n8n' && typeLower.includes('failure'))) {\n    score = 4;\n    reason = 'Workflow failure';\n  }\n  // Job match > 80\n  else if (/job.*(match|score)/i.test(combined)) {\n    const scoreMatch = combined.match(/score.*?(\\d+)/);\n    if (scoreMatch && parseInt(scoreMatch[1], 10) > 80) {\n      score = 4;\n      reason = `Job match score ${scoreMatch[1]} (>80)`;\n    }\n  }\n  // Severity warning/error from Alertmanager\n  else if (sevLower === 'error' || sevLower === 'high') {\n    score = 4;\n    reason = `Severity marked as ${severity}`;\n  }\n\n  // ── Score 3 (Medium) ────────────────────────────────────\n  // Escalation rate > 25%\n  else if (/escalat/i.test(combined)) {\n    const rateMatch = combined.match(/(\\d+)\\s*%/);\n    if (rateMatch && parseInt(rateMatch[1], 10) > 25) {\n      score = 3;\n      reason = `Escalation rate ${rateMatch[1]}% (>25%)`;\n    } else {\n      score = 3;\n      reason = 'Escalation detected';\n    }\n  }\n  // API cost > $10/day\n  else if (/api.*(cost|spend|bill)/i.test(combined)) {\n    const costMatch = combined.match(/\\$?(\\d+\\.?\\d*)/);\n    if (costMatch && parseFloat(costMatch[1]) > 10) {\n      score = 3;\n      reason = `API cost $${costMatch[1]}/day (>$10)`;\n    }\n  }\n  // High-priority email\n  else if (/email.*(urgent|high.?pri|important)/i.test(combined) || /high.?pri.*email/i.test(combined)) {\n    score = 3;\n    reason = 'High-priority email notification';\n  }\n  // Severity warning\n  else if (sevLower === 'warning' || sevLower === 'medium') {\n    score = 3;\n    reason = `Severity marked as ${severity}`;\n  }\n\n  // ── Score 2 (Low) ───────────────────────────────────────\n  // Transient CPU spikes\n  else if (/cpu.*(spike|burst|transient|high)/i.test(combined)) {\n    score = 2;\n    reason = 'Transient CPU spike';\n  }\n  // Watchtower updates\n  else if (/watchtower|image.*(update|pull)/i.test(combined)) {\n    score = 2;\n    reason = 'Watchtower container update';\n  }\n  // Scheduled restarts\n  else if (/schedul.*(restart|reboot|maintenance)/i.test(combined)) {\n    score = 2;\n    reason = 'Scheduled restart/maintenance';\n  }\n  // Info severity\n  else if (sevLower === 'info' || sevLower === 'low') {\n    score = 2;\n    reason = `Severity marked as ${severity}`;\n  }\n\n  // ── Score 1 (Noise) ─────────────────────────────────────\n  // Successful routine runs\n  else if (/success|complet|ok|pass|healthy|resolved/i.test(combined)) {\n    score = 1;\n    reason = 'Successful / resolved routine event';\n  }\n  // Brief latency spikes\n  else if (/latency.*(spike|brief|transient)/i.test(combined)) {\n    score = 1;\n    reason = 'Brief latency spike';\n  }\n\n  // Map score to label\n  const scoreLabels = {\n    5: 'Critical',\n    4: 'High',\n    3: 'Medium',\n    2: 'Low',\n    1: 'Noise'\n  };\n\n  items.push({\n    json: {\n      ...item.json,\n      score,\n      scoreLabel: scoreLabels[score] || 'Unknown',\n      scoreReason: reason\n    }\n  });\n}\n\nreturn items;"
+      },
+      "id": "deterministic-scoring",
+      "name": "Deterministic Scoring",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [560, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Time-of-day gating\n//\n// 22:00 - 07:00 (night) → only push score 5 (Critical)\n// 07:00 - 22:00 (day)   → push score 4-5 (High + Critical)\n//\n// All notifications pass through to the log regardless.\n// This node adds: shouldPush (boolean), pushThreshold (int), currentHour (int)\n\nconst items = [];\n\nfor (const item of $input.all()) {\n  const now = new Date();\n  // Adjust for local timezone (US Central = UTC-6, adjust as needed)\n  // Using the server's local time via getHours()\n  const currentHour = now.getHours();\n\n  const isNightMode = (currentHour >= 22 || currentHour < 7);\n  const pushThreshold = isNightMode ? 5 : 4;\n\n  const score = item.json.score || 1;\n  const shouldPush = score >= pushThreshold;\n\n  items.push({\n    json: {\n      ...item.json,\n      shouldPush,\n      pushThreshold,\n      currentHour,\n      timeMode: isNightMode ? 'night (22:00-07:00)' : 'day (07:00-22:00)'\n    }\n  });\n}\n\nreturn items;"
+      },
+      "id": "time-of-day-gate",
+      "name": "Time-of-Day Gate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [840, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "should-push",
+              "leftValue": "={{ $json.shouldPush }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-should-push",
+      "name": "Should Push?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.38:8090/ai-alerts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Title",
+              "value": "={{ (() => { const s = $json.score; const labels = { 5: 'CRITICAL', 4: 'HIGH', 3: 'MEDIUM' }; return (labels[s] || 'ALERT') + ': ' + ($json.type || 'notification'); })() }}"
+            },
+            {
+              "name": "Priority",
+              "value": "={{ $json.score >= 5 ? 'urgent' : ($json.score >= 4 ? 'high' : 'default') }}"
+            },
+            {
+              "name": "Tags",
+              "value": "={{ [$json.source, $json.scoreLabel.toLowerCase(), $json.type].filter(Boolean).join(',') }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "string",
+        "body": "={{ 'Score: ' + $json.score + '/5 (' + $json.scoreLabel + ')\\nSource: ' + $json.source + '\\nType: ' + $json.type + '\\nReason: ' + $json.scoreReason + '\\nTime mode: ' + $json.timeMode + '\\n\\n' + $json.message }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "ntfy-push",
+      "name": "ntfy — Push to ai-alerts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1400, 180]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log ALL notifications (both pushed and suppressed) for future SQLite integration\n//\n// Schema for notifications table:\n//   id INTEGER PRIMARY KEY AUTOINCREMENT,\n//   source TEXT,\n//   type TEXT,\n//   message TEXT,\n//   severity TEXT,\n//   score INTEGER,\n//   score_label TEXT,\n//   score_reason TEXT,\n//   should_push BOOLEAN,\n//   push_threshold INTEGER,\n//   time_mode TEXT,\n//   current_hour INTEGER,\n//   status TEXT,\n//   received_at TEXT,\n//   logged_at TEXT\n//\n// To enable SQLite: replace this Code node with an n8n SQLite node\n// or HTTP Request to a logging API.\n\nconst items = [];\n\nfor (const item of $input.all()) {\n  const logEntry = {\n    source: item.json.source || 'unknown',\n    type: item.json.type || 'generic',\n    message: (item.json.message || '').substring(0, 1000),\n    severity: item.json.severity || 'info',\n    score: item.json.score || 0,\n    scoreLabel: item.json.scoreLabel || 'Unknown',\n    scoreReason: item.json.scoreReason || '',\n    shouldPush: item.json.shouldPush || false,\n    pushThreshold: item.json.pushThreshold || 4,\n    timeMode: item.json.timeMode || 'unknown',\n    currentHour: item.json.currentHour || -1,\n    status: item.json.status || 'unknown',\n    receivedAt: item.json.receivedAt || new Date().toISOString(),\n    loggedAt: new Date().toISOString(),\n    pushed: item.json.shouldPush || false\n  };\n\n  // Log to n8n execution output (visible in execution history)\n  console.log(JSON.stringify({\n    event: 'notification_logged',\n    ...logEntry\n  }));\n\n  items.push({\n    json: {\n      status: 'logged',\n      ...logEntry\n    }\n  });\n}\n\nreturn items;"
+      },
+      "id": "log-notification",
+      "name": "Log Notification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1680, 300]
+    }
+  ],
+  "connections": {
+    "Webhook — POST /notification-filter": {
+      "main": [
+        [
+          {
+            "node": "Extract & Normalize Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract & Normalize Alert": {
+      "main": [
+        [
+          {
+            "node": "Deterministic Scoring",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deterministic Scoring": {
+      "main": [
+        [
+          {
+            "node": "Time-of-Day Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Time-of-Day Gate": {
+      "main": [
+        [
+          {
+            "node": "Should Push?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Push?": {
+      "main": [
+        [
+          {
+            "node": "ntfy — Push to ai-alerts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ntfy — Push to ai-alerts": {
+      "main": [
+        [
+          {
+            "node": "Log Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": [
+    {
+      "name": "notification-filter"
+    },
+    {
+      "name": "monitoring"
+    },
+    {
+      "name": "phase-2"
+    }
+  ],
+  "triggerCount": 1,
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": ""
+  },
+  "notes": "## Notification Filter (S-notif)\n\n### How to use\n\n**Send an alert:**\n```bash\ncurl -X POST http://<n8n-host>/webhook/notification-filter \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n    \"source\": \"alertmanager\",\n    \"type\": \"service_down\",\n    \"message\": \"LXC 101 (n8n) unreachable for 6 minutes\",\n    \"severity\": \"critical\"\n  }'\n```\n\n**Alertmanager format also supported:**\n```bash\ncurl -X POST http://<n8n-host>/webhook/notification-filter \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n    \"alerts\": [{\n      \"status\": \"firing\",\n      \"labels\": { \"alertname\": \"DiskFull\", \"severity\": \"warning\", \"instance\": \"neubneub:9090\" },\n      \"annotations\": { \"summary\": \"Disk usage at 92% on neubneub\" }\n    }]\n  }'\n```\n\n### Scoring Rules\n- **5 Critical**: Service down >5 min, LXC/container crash, Gateway unreachable\n- **4 High**: Disk >85%, GPU temp >85C, Workflow failure, Job match >80\n- **3 Medium**: Escalation rate >25%, API cost >$10/day, High-priority email\n- **2 Low**: Transient CPU spikes, Watchtower updates, Scheduled restarts\n- **1 Noise**: Successful routine runs, Brief latency spikes\n\n### Time-of-Day Gating\n- **22:00-07:00 (Night)**: Only push score 5 (Critical)\n- **07:00-22:00 (Day)**: Push score 4-5 (High + Critical)\n\n### ntfy\n- Topic: ai-alerts @ http://192.168.1.38:8090\n- Priority mapped: score 5 = urgent, score 4 = high\n\n### Logging\n- All notifications logged to n8n execution output\n- Ready for SQLite integration (schema in Log node comments)"
+}

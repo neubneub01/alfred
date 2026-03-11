@@ -1,0 +1,710 @@
+{
+  "name": "Email Triage — Fastmail JMAP",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "trigger-poll",
+      "name": "Poll Every 5 Min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.fastmail.com/jmap/api/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"using\": [\n    \"urn:ietf:params:jmap:core\",\n    \"urn:ietf:params:jmap:mail\"\n  ],\n  \"methodCalls\": [\n    [\n      \"Email/query\",\n      {\n        \"accountId\": \"{{ $credentials.accountId }}\",\n        \"filter\": {\n          \"inMailbox\": \"{{ $credentials.inboxId }}\",\n          \"after\": \"{{ $now.minus({ minutes: 6 }).toISO() }}\"\n        },\n        \"sort\": [{ \"property\": \"receivedAt\", \"isAscending\": false }],\n        \"limit\": 50\n      },\n      \"emailQuery\"\n    ],\n    [\n      \"Email/get\",\n      {\n        \"accountId\": \"{{ $credentials.accountId }}\",\n        \"#ids\": {\n          \"resultOf\": \"emailQuery\",\n          \"name\": \"Email/query\",\n          \"path\": \"/ids\"\n        },\n        \"properties\": [\n          \"id\",\n          \"subject\",\n          \"from\",\n          \"receivedAt\",\n          \"preview\",\n          \"mailboxIds\",\n          \"keywords\"\n        ]\n      },\n      \"emailGet\"\n    ]\n  ]\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "jmap-fetch",
+      "name": "JMAP — Fetch New Emails",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FASTMAIL_CREDENTIAL_ID",
+          "name": "Fastmail JMAP Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-emails",
+              "leftValue": "={{ $json.methodResponses[1][1].list.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "check-emails",
+      "name": "Any New Emails?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "={{ $json.methodResponses[1][1].list }}",
+        "options": {}
+      },
+      "id": "split-emails",
+      "name": "Split Into Items",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [660, -60]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ JSON.stringify({\n  emailId: $json.id,\n  subject: $json.subject || '(no subject)',\n  sender: $json.from && $json.from[0] ? ($json.from[0].name || '') + ' <' + $json.from[0].email + '>' : 'unknown',\n  senderEmail: $json.from && $json.from[0] ? $json.from[0].email : '',\n  preview: ($json.preview || '').substring(0, 500),\n  receivedAt: $json.receivedAt,\n  mailboxIds: $json.mailboxIds\n}) }}",
+        "options": {}
+      },
+      "id": "extract-fields",
+      "name": "Extract Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [880, -60]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.52:4000/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"model\": \"batch-triage\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an email triage classifier. Analyze the email and return ONLY valid JSON matching this schema:\\n{\\\"category\\\": string, \\\"priority\\\": 1-5, \\\"confidence\\\": 0.0-1.0, \\\"reason\\\": string}\\n\\nCategories:\\n- recruiter-matching: Job postings or recruiter outreach for tax provision, income tax, ASC 740, tax accounting, tax compliance, tax reporting, tax technology, Big 4 tax, corporate tax, deferred tax, tax automation roles. Also: CPA, EA, or tax manager positions.\\n- interview-scheduling: Interview confirmations, scheduling requests, calendar invites for interviews.\\n- recruiter-non-matching: Recruiter outreach for roles NOT matching tax/accounting (e.g. sales, marketing, unrelated engineering).\\n- newsletter: Marketing emails, blog digests, product updates, mailing list content, promotional offers.\\n- transactional: Order confirmations, shipping updates, password resets, account notifications, receipts, statements.\\n- personal: Messages from known contacts, family, friends, or personal correspondence.\\n- actionable: Emails requiring a response or action — meeting requests, questions, approvals, deadlines, follow-ups.\\n- spam: Unsolicited junk, phishing attempts, obvious spam.\\n\\nPriority scale: 1=immediate, 2=high, 3=normal, 4=low, 5=none.\\nDo not include any text outside the JSON object.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"From: \" + $json.sender + \"\\nSubject: \" + $json.subject + \"\\nPreview: \" + $json.preview\n    }\n  ],\n  \"temperature\": 0.1,\n  \"max_tokens\": 200\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "classify-email",
+      "name": "Gateway — Classify",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, -60]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const emailId = $('Extract Fields').item.json.emailId;\n  const subject = $('Extract Fields').item.json.subject;\n  const sender = $('Extract Fields').item.json.sender;\n  const mailboxIds = $('Extract Fields').item.json.mailboxIds;\n  \n  let classification;\n  try {\n    const content = $json.choices[0].message.content;\n    classification = typeof content === 'string' ? JSON.parse(content) : content;\n  } catch(e) {\n    classification = { category: 'personal', priority: 3, confidence: 0, reason: 'Parse error: ' + e.message };\n  }\n  \n  return JSON.stringify({\n    emailId,\n    subject,\n    sender,\n    mailboxIds,\n    category: classification.category,\n    priority: classification.priority,\n    confidence: classification.confidence,\n    reason: classification.reason\n  });\n})() }}",
+        "options": {}
+      },
+      "id": "parse-classification",
+      "name": "Parse Classification",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1320, -60]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "recruiter-matching",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Recruiter Match"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "interview-scheduling",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Interview"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "actionable",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Actionable"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "newsletter",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Newsletter"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "transactional",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Transactional"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "recruiter-non-matching",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Recruiter Other"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "spam",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Spam"
+            }
+          ],
+          "fallbackOutput": {
+            "active": true
+          }
+        },
+        "options": {
+          "allMatchingOutputs": false
+        }
+      },
+      "id": "route-category",
+      "name": "Route by Category",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [1540, -60]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.fastmail.com/jmap/api/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"using\": [\n    \"urn:ietf:params:jmap:core\",\n    \"urn:ietf:params:jmap:mail\"\n  ],\n  \"methodCalls\": [\n    [\n      \"Email/set\",\n      {\n        \"accountId\": \"{{ $credentials.accountId }}\",\n        \"update\": {\n          [($json.emailId)]: {\n            \"mailboxIds\": { \"{{ $credentials.jobSearchFolderId }}\": true },\n            \"keywords/$flagged\": true\n          }\n        }\n      },\n      \"moveRecruiterMatch\"\n    ]\n  ]\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "move-recruiter-match",
+      "name": "→ Job Search Folder + Flag",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1820, -360],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FASTMAIL_CREDENTIAL_ID",
+          "name": "Fastmail JMAP Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.fastmail.com/jmap/api/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"using\": [\n    \"urn:ietf:params:jmap:core\",\n    \"urn:ietf:params:jmap:mail\"\n  ],\n  \"methodCalls\": [\n    [\n      \"Email/set\",\n      {\n        \"accountId\": \"{{ $credentials.accountId }}\",\n        \"update\": {\n          [($json.emailId)]: {\n            \"keywords/$flagged\": true\n          }\n        }\n      },\n      \"flagInterview\"\n    ]\n  ]\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "flag-interview",
+      "name": "→ Flag Interview",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1820, -220],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FASTMAIL_CREDENTIAL_ID",
+          "name": "Fastmail JMAP Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.fastmail.com/jmap/api/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"using\": [\n    \"urn:ietf:params:jmap:core\",\n    \"urn:ietf:params:jmap:mail\"\n  ],\n  \"methodCalls\": [\n    [\n      \"Email/set\",\n      {\n        \"accountId\": \"{{ $credentials.accountId }}\",\n        \"update\": {\n          [($json.emailId)]: {\n            \"mailboxIds\": { \"{{ $credentials.actionRequiredFolderId }}\": true },\n            \"keywords/$flagged\": true\n          }\n        }\n      },\n      \"moveActionable\"\n    ]\n  ]\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "move-actionable",
+      "name": "→ Action Required + Flag",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1820, -80],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FASTMAIL_CREDENTIAL_ID",
+          "name": "Fastmail JMAP Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.fastmail.com/jmap/api/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"using\": [\n    \"urn:ietf:params:jmap:core\",\n    \"urn:ietf:params:jmap:mail\"\n  ],\n  \"methodCalls\": [\n    [\n      \"Email/set\",\n      {\n        \"accountId\": \"{{ $credentials.accountId }}\",\n        \"update\": {\n          [($json.emailId)]: {\n            \"mailboxIds\": { \"{{ $credentials.archiveFolderId }}\": true }\n          }\n        }\n      },\n      \"archiveNewsletter\"\n    ]\n  ]\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "archive-newsletter",
+      "name": "→ Archive",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1820, 60],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FASTMAIL_CREDENTIAL_ID",
+          "name": "Fastmail JMAP Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.fastmail.com/jmap/api/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"using\": [\n    \"urn:ietf:params:jmap:core\",\n    \"urn:ietf:params:jmap:mail\"\n  ],\n  \"methodCalls\": [\n    [\n      \"Email/set\",\n      {\n        \"accountId\": \"{{ $credentials.accountId }}\",\n        \"update\": {\n          [($json.emailId)]: {\n            \"keywords/triaged\": true\n          }\n        }\n      },\n      \"labelTransactional\"\n    ]\n  ]\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "label-transactional",
+      "name": "→ Label Transactional",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1820, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FASTMAIL_CREDENTIAL_ID",
+          "name": "Fastmail JMAP Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.fastmail.com/jmap/api/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"using\": [\n    \"urn:ietf:params:jmap:core\",\n    \"urn:ietf:params:jmap:mail\"\n  ],\n  \"methodCalls\": [\n    [\n      \"Email/set\",\n      {\n        \"accountId\": \"{{ $credentials.accountId }}\",\n        \"update\": {\n          [($json.emailId)]: {\n            \"mailboxIds\": { \"{{ $credentials.archiveFolderId }}\": true }\n          }\n        }\n      },\n      \"archiveRecruiterOther\"\n    ]\n  ]\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "archive-recruiter-other",
+      "name": "→ Archive Low-Priority",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1820, 340],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FASTMAIL_CREDENTIAL_ID",
+          "name": "Fastmail JMAP Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.fastmail.com/jmap/api/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"using\": [\n    \"urn:ietf:params:jmap:core\",\n    \"urn:ietf:params:jmap:mail\"\n  ],\n  \"methodCalls\": [\n    [\n      \"Email/set\",\n      {\n        \"accountId\": \"{{ $credentials.accountId }}\",\n        \"update\": {\n          [($json.emailId)]: {\n            \"mailboxIds\": { \"{{ $credentials.archiveFolderId }}\": true }\n          }\n        }\n      },\n      \"archiveSpam\"\n    ]\n  ]\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "archive-spam",
+      "name": "→ Archive Spam",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1820, 480],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FASTMAIL_CREDENTIAL_ID",
+          "name": "Fastmail JMAP Token"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "noop-personal",
+      "name": "→ Leave in Inbox",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1820, 620]
+    }
+  ],
+  "connections": {
+    "Poll Every 5 Min": {
+      "main": [
+        [
+          {
+            "node": "JMAP — Fetch New Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JMAP — Fetch New Emails": {
+      "main": [
+        [
+          {
+            "node": "Any New Emails?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any New Emails?": {
+      "main": [
+        [
+          {
+            "node": "Split Into Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Into Items": {
+      "main": [
+        [
+          {
+            "node": "Extract Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Fields": {
+      "main": [
+        [
+          {
+            "node": "Gateway — Classify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gateway — Classify": {
+      "main": [
+        [
+          {
+            "node": "Parse Classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Classification": {
+      "main": [
+        [
+          {
+            "node": "Route by Category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Category": {
+      "main": [
+        [
+          {
+            "node": "→ Job Search Folder + Flag",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "→ Flag Interview",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "→ Action Required + Flag",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "→ Archive",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "→ Label Transactional",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "→ Archive Low-Priority",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "→ Archive Spam",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "→ Leave in Inbox",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "email-triage"
+    },
+    {
+      "name": "phase-2"
+    }
+  ]
+}

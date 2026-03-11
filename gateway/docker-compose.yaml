@@ -1,0 +1,57 @@
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# LiteLLM Gateway — Docker Compose
+# Host C LXC 102 (192.168.1.52:4000)
+# Deploy to: /opt/litellm/docker-compose.yaml
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+services:
+  litellm:
+    image: litellm/litellm
+    container_name: litellm-gateway
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    volumes:
+      - /opt/litellm:/app/config
+    environment:
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - PYTHONPATH=/app/config
+    command:
+      - "--config"
+      - "/app/config/config.yaml"
+      - "--port"
+      - "4000"
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import socket; s=socket.create_connection(('localhost',4000),timeout=5); s.close()\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  agent-service:
+    build: ./agent-service
+    container_name: agent-service
+    restart: unless-stopped
+    ports:
+      - "8100:8100"
+    volumes:
+      - /mnt/ai-context:/context:ro
+      - /opt/agent-service/data:/app/data
+    environment:
+      - GATEWAY_URL=http://litellm-gateway:4000/v1/chat/completions
+      - GATEWAY_KEY=${LITELLM_MASTER_KEY}
+      - NTFY_URL=http://192.168.1.38:8090
+      - PAPERLESS_URL=http://192.168.1.221:8000
+      - N8N_URL=http://192.168.1.52:5678
+    depends_on:
+      litellm:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8100/health', timeout=5)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

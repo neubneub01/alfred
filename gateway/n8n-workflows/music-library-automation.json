@@ -1,0 +1,618 @@
+{
+  "id": "104",
+  "name": "Music Library Automation — Overnight Batch Processing",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-daily-2am",
+      "name": "Daily 2 AM — Scan Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 300],
+      "notes": "Daily at 2:00 AM America/New_York — scan for untagged FLAC files"
+    },
+    {
+      "parameters": {
+        "command": "find /music -name \"*.flac\" -newer /tmp/.music-scan-marker -type f 2>/dev/null | head -50"
+      },
+      "id": "scan-flac-files",
+      "name": "Scan — Find Untagged FLACs",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [260, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Split find output into individual file path items\nconst stdout = $input.first().json.stdout || '';\nconst lines = stdout.split('\\n').filter(line => line.trim().length > 0);\n\nif (lines.length === 0) {\n  // No new files found — return empty to stop pipeline\n  return [];\n}\n\nconst items = lines.map(filePath => ({\n  json: {\n    filePath: filePath.trim(),\n    fileName: filePath.trim().split('/').pop()\n  }\n}));\n\nreturn items;"
+      },
+      "id": "split-file-paths",
+      "name": "Split Into Individual Files",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "command": "=ffprobe -v quiet -print_format json -show_format \"{{ $json.filePath }}\""
+      },
+      "id": "ffprobe-metadata",
+      "name": "ffprobe — Extract Metadata",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [780, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse ffprobe JSON output and extract existing tags\nconst items = [];\n\nfor (const item of $input.all()) {\n  const filePath = $('Split Into Individual Files').item.json.filePath;\n  const fileName = $('Split Into Individual Files').item.json.fileName;\n  const stdout = item.json.stdout || '{}';\n\n  let tags = {};\n  let duration = 0;\n  let bitrate = 0;\n\n  try {\n    const ffprobeData = JSON.parse(stdout);\n    if (ffprobeData.format) {\n      tags = ffprobeData.format.tags || {};\n      duration = parseFloat(ffprobeData.format.duration) || 0;\n      bitrate = parseInt(ffprobeData.format.bit_rate, 10) || 0;\n    }\n  } catch (e) {\n    // ffprobe parse error — continue with empty tags\n    tags = {};\n  }\n\n  // Normalize tag keys to lowercase for consistency\n  const normalizedTags = {};\n  for (const [key, value] of Object.entries(tags)) {\n    normalizedTags[key.toLowerCase()] = value;\n  }\n\n  items.push({\n    json: {\n      filePath,\n      fileName,\n      artist: normalizedTags.artist || normalizedTags.albumartist || '',\n      album: normalizedTags.album || '',\n      title: normalizedTags.title || '',\n      genre: normalizedTags.genre || '',\n      date: normalizedTags.date || normalizedTags.year || '',\n      trackNumber: normalizedTags.tracknumber || normalizedTags.track || '',\n      duration: Math.round(duration),\n      bitrate,\n      existingTags: normalizedTags,\n      hasGenre: !!(normalizedTags.genre && normalizedTags.genre.trim().length > 0)\n    }\n  });\n}\n\nreturn items;"
+      },
+      "id": "parse-ffprobe",
+      "name": "Parse Existing Tags",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1040, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.52:4000/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"model\": \"batch-triage\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a music metadata classifier. Given the filename and existing tags, classify the genre and mood. Return ONLY JSON: {\\\"genre\\\": string, \\\"subgenre\\\": string, \\\"mood\\\": string, \\\"confidence\\\": float}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Classify this track:\\nFilename: \" + $json.fileName + \"\\nArtist: \" + $json.artist + \"\\nAlbum: \" + $json.album + \"\\nTitle: \" + $json.title + \"\\nExisting Genre: \" + $json.genre + \"\\nYear: \" + $json.date\n    }\n  ],\n  \"temperature\": 0.1,\n  \"max_tokens\": 200\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "llm-classify-genre",
+      "name": "LiteLLM — Classify Genre & Mood",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1300, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "LITELLM_CREDENTIAL_ID",
+          "name": "LiteLLM Gateway Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse LLM classification response\nconst items = [];\n\nfor (const item of $input.all()) {\n  const llmResponse = item.json;\n  const trackMeta = $('Parse Existing Tags').item.json;\n\n  let classification;\n  try {\n    const content = llmResponse.choices[0].message.content;\n    if (typeof content === 'string') {\n      // Strip markdown code fences if present\n      const cleaned = content.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n      classification = JSON.parse(cleaned);\n    } else {\n      classification = content;\n    }\n  } catch (e) {\n    classification = {\n      genre: '',\n      subgenre: '',\n      mood: '',\n      confidence: 0.0\n    };\n  }\n\n  // Normalize confidence\n  let confidence = parseFloat(classification.confidence);\n  if (isNaN(confidence)) confidence = 0.0;\n  if (confidence < 0) confidence = 0.0;\n  if (confidence > 1) confidence = 1.0;\n\n  items.push({\n    json: {\n      filePath: trackMeta.filePath,\n      fileName: trackMeta.fileName,\n      artist: trackMeta.artist,\n      album: trackMeta.album,\n      title: trackMeta.title,\n      existingGenre: trackMeta.genre,\n      genre: classification.genre || '',\n      subgenre: classification.subgenre || '',\n      mood: classification.mood || '',\n      confidence,\n      hadGenre: trackMeta.hasGenre\n    }\n  });\n}\n\nreturn items;"
+      },
+      "id": "parse-classification",
+      "name": "Parse LLM Classification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "confidence-check",
+              "leftValue": "={{ $json.confidence }}",
+              "rightValue": 0.7,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "confidence-gate",
+      "name": "IF Confidence > 0.7",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1820, 300]
+    },
+    {
+      "parameters": {
+        "command": "=metaflac --remove-tag=GENRE --set-tag=\"GENRE={{ $json.genre }}\" --remove-tag=MOOD --set-tag=\"MOOD={{ $json.mood }}\" \"{{ $json.filePath }}\""
+      },
+      "id": "metaflac-update",
+      "name": "metaflac — Update Tags",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [2100, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate results for batch summary\nconst allClassified = $('Parse LLM Classification').all();\nconst updated = $('metaflac — Update Tags').all();\nconst skippedItems = $('IF Confidence > 0.7').all();\n\nlet totalScanned = allClassified.length;\nlet totalUpdated = updated.length;\nlet totalSkipped = totalScanned - totalUpdated;\n\n// Build genre breakdown\nconst genreCounts = {};\nfor (const item of allClassified) {\n  const genre = item.json.genre || 'Unknown';\n  genreCounts[genre] = (genreCounts[genre] || 0) + 1;\n}\n\nconst genreBreakdown = Object.entries(genreCounts)\n  .sort((a, b) => b[1] - a[1])\n  .map(([genre, count]) => `  ${genre}: ${count}`)\n  .join('\\n');\n\n// Build summary\nconst summary = [\n  `Music Library Batch — ${new Date().toISOString().split('T')[0]}`,\n  `Scanned: ${totalScanned} files`,\n  `Updated: ${totalUpdated} (confidence > 0.7)`,\n  `Skipped: ${totalSkipped} (low confidence)`,\n  '',\n  'Genre breakdown:',\n  genreBreakdown\n].join('\\n');\n\nreturn [{\n  json: {\n    summary,\n    totalScanned,\n    totalUpdated,\n    totalSkipped,\n    genreCounts,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "aggregate-results",
+      "name": "Aggregate Batch Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2360, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.38:8090/ai-alerts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Title",
+              "value": "Music Library Batch Complete"
+            },
+            {
+              "name": "Priority",
+              "value": "default"
+            },
+            {
+              "name": "Tags",
+              "value": "music,batch,ai"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "string",
+        "body": "={{ $json.summary }}",
+        "options": {}
+      },
+      "id": "ntfy-batch-summary",
+      "name": "ntfy — Batch Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2620, 300]
+    },
+    {
+      "parameters": {
+        "command": "touch /tmp/.music-scan-marker"
+      },
+      "id": "update-scan-marker",
+      "name": "Update Scan Marker",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [2880, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Low-confidence items — log but don't update\nconst items = [];\n\nfor (const item of $input.all()) {\n  items.push({\n    json: {\n      ...item.json,\n      skipped: true,\n      reason: `Confidence ${item.json.confidence} <= 0.7 threshold`\n    }\n  });\n}\n\nreturn items;"
+      },
+      "id": "log-skipped",
+      "name": "Log Skipped (Low Confidence)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2100, 440]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 3 * * 0"
+            }
+          ]
+        }
+      },
+      "id": "cron-weekly-sunday",
+      "name": "Sunday 3 AM — Album Descriptions",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 800],
+      "notes": "Weekly on Sunday at 3:00 AM — generate descriptions for new albums"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://192.168.1.38:8877/rest/getAlbumList2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "newest"
+            },
+            {
+              "name": "size",
+              "value": "20"
+            },
+            {
+              "name": "u",
+              "value": "={{ $vars.NAVIDROME_USER }}"
+            },
+            {
+              "name": "t",
+              "value": "={{ $vars.NAVIDROME_TOKEN }}"
+            },
+            {
+              "name": "s",
+              "value": "={{ $vars.NAVIDROME_SALT }}"
+            },
+            {
+              "name": "v",
+              "value": "1.16.1"
+            },
+            {
+              "name": "c",
+              "value": "n8n-music-automation"
+            },
+            {
+              "name": "f",
+              "value": "json"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 15000
+        }
+      },
+      "id": "navidrome-get-albums",
+      "name": "Navidrome — Get Newest Albums",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [260, 800]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter albums that don't have descriptions/comments\nconst items = [];\nconst response = $input.first().json;\n\n// Navidrome Subsonic API nests under subsonic-response.albumList2.album\nlet albums = [];\ntry {\n  albums = response['subsonic-response']?.albumList2?.album || [];\n} catch (e) {\n  // Try alternate response shapes\n  if (Array.isArray(response)) {\n    albums = response;\n  } else if (response.albumList2) {\n    albums = response.albumList2.album || [];\n  }\n}\n\nfor (const album of albums) {\n  // Skip albums that already have a comment/description\n  if (album.comment && album.comment.trim().length > 0) {\n    continue;\n  }\n\n  items.push({\n    json: {\n      albumId: album.id,\n      albumName: album.name || album.title || '',\n      artist: album.artist || album.albumArtist || '',\n      genre: album.genre || '',\n      year: album.year || '',\n      songCount: album.songCount || 0,\n      duration: album.duration || 0\n    }\n  });\n}\n\nreturn items.length > 0 ? items : [];"
+      },
+      "id": "filter-no-description",
+      "name": "Filter Albums Without Descriptions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 800]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.52:4000/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"model\": \"summarize\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a music journalist writing album descriptions for a personal music library. Write a concise, evocative 2-3 sentence description suitable for a music player's album comment field. Focus on the mood, style, and context of the album. Do not use quotes. Output only the description text, nothing else.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Write a brief album description for:\\nAlbum: \" + $json.albumName + \"\\nArtist: \" + $json.artist + \"\\nGenre: \" + $json.genre + \"\\nYear: \" + $json.year + \"\\nTracks: \" + $json.songCount\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 200\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "llm-album-description",
+      "name": "LiteLLM — Generate Album Description",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [780, 800],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "LITELLM_CREDENTIAL_ID",
+          "name": "LiteLLM Gateway Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the generated description from LLM response\nconst items = [];\n\nfor (const item of $input.all()) {\n  const llmResponse = item.json;\n  const albumMeta = $('Filter Albums Without Descriptions').item.json;\n\n  let description = '';\n  try {\n    description = llmResponse.choices[0].message.content.trim();\n    // Remove wrapping quotes if present\n    if (description.startsWith('\"') && description.endsWith('\"')) {\n      description = description.slice(1, -1);\n    }\n  } catch (e) {\n    description = '';\n  }\n\n  if (description.length > 0) {\n    items.push({\n      json: {\n        albumId: albumMeta.albumId,\n        albumName: albumMeta.albumName,\n        artist: albumMeta.artist,\n        description\n      }\n    });\n  }\n}\n\nreturn items;"
+      },
+      "id": "parse-album-description",
+      "name": "Parse Album Description",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1040, 800]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=http://192.168.1.38:8877/rest/updateAlbumComment",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "={{ $json.albumId }}"
+            },
+            {
+              "name": "comment",
+              "value": "={{ $json.description }}"
+            },
+            {
+              "name": "u",
+              "value": "={{ $vars.NAVIDROME_USER }}"
+            },
+            {
+              "name": "t",
+              "value": "={{ $vars.NAVIDROME_TOKEN }}"
+            },
+            {
+              "name": "s",
+              "value": "={{ $vars.NAVIDROME_SALT }}"
+            },
+            {
+              "name": "v",
+              "value": "1.16.1"
+            },
+            {
+              "name": "c",
+              "value": "n8n-music-automation"
+            },
+            {
+              "name": "f",
+              "value": "json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "navidrome-update-comment",
+      "name": "Navidrome — Update Album Comment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1300, 800]
+    }
+  ],
+  "connections": {
+    "Daily 2 AM — Scan Trigger": {
+      "main": [
+        [
+          {
+            "node": "Scan — Find Untagged FLACs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scan — Find Untagged FLACs": {
+      "main": [
+        [
+          {
+            "node": "Split Into Individual Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Into Individual Files": {
+      "main": [
+        [
+          {
+            "node": "ffprobe — Extract Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ffprobe — Extract Metadata": {
+      "main": [
+        [
+          {
+            "node": "Parse Existing Tags",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Existing Tags": {
+      "main": [
+        [
+          {
+            "node": "LiteLLM — Classify Genre & Mood",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LiteLLM — Classify Genre & Mood": {
+      "main": [
+        [
+          {
+            "node": "Parse LLM Classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse LLM Classification": {
+      "main": [
+        [
+          {
+            "node": "IF Confidence > 0.7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Confidence > 0.7": {
+      "main": [
+        [
+          {
+            "node": "metaflac — Update Tags",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Skipped (Low Confidence)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "metaflac — Update Tags": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Batch Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Skipped (Low Confidence)": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Batch Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Batch Results": {
+      "main": [
+        [
+          {
+            "node": "ntfy — Batch Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ntfy — Batch Summary": {
+      "main": [
+        [
+          {
+            "node": "Update Scan Marker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sunday 3 AM — Album Descriptions": {
+      "main": [
+        [
+          {
+            "node": "Navidrome — Get Newest Albums",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Navidrome — Get Newest Albums": {
+      "main": [
+        [
+          {
+            "node": "Filter Albums Without Descriptions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Albums Without Descriptions": {
+      "main": [
+        [
+          {
+            "node": "LiteLLM — Generate Album Description",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LiteLLM — Generate Album Description": {
+      "main": [
+        [
+          {
+            "node": "Parse Album Description",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Album Description": {
+      "main": [
+        [
+          {
+            "node": "Navidrome — Update Album Comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "",
+    "timezone": "America/New_York"
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": [
+    {
+      "name": "music-library"
+    },
+    {
+      "name": "batch-processing"
+    },
+    {
+      "name": "ai-classification"
+    }
+  ],
+  "triggerCount": 2,
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": ""
+  }
+}

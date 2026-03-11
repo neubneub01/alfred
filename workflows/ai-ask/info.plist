@@ -107,9 +107,9 @@
 				<key>escaping</key>
 				<integer>102</integer>
 				<key>script</key>
-				<string>./ask_claude.sh "{query}"</string>
+				<string>bash ask_claude.sh "{query}"</string>
 				<key>scriptargtype</key>
-				<integer>1</integer>
+				<integer>0</integer>
 				<key>scriptfile</key>
 				<string></string>
 				<key>type</key>
@@ -279,7 +279,7 @@ Variables:
 	<key>variables</key>
 	<dict>
 		<key>ANTHROPIC_API_KEY</key>
-		<string></string>
+		<string>YOUR_API_KEY_HERE</string>
 		<key>MODEL</key>
 		<string>claude-sonnet-4-20250514</string>
 	</dict>

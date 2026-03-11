@@ -1,0 +1,26 @@
+Classify the user prompt into exactly one alias. Return ONLY valid JSON.
+
+Aliases:
+- code: Programming, debugging, scripts, infrastructure, DevOps, Docker, git, APIs, config files.
+  Ex: "write a Python script", "fix this TypeScript error", "nginx config for reverse proxy"
+- analyze: Tax, finance, legal, regulatory, accounting, business analysis, data interpretation.
+  Ex: "deduction for home office", "analyze this P&L", "IRC section for depreciation"
+- agent: Multi-step tasks needing tool use, web searches, file operations, or chained actions.
+  Ex: "find all PDF invoices and extract totals", "research competitors and summarize"
+- long-context: Large documents, codebases, or transcripts provided for Q&A.
+  Ex: "read this 50-page contract and find liability clauses", "summarize this codebase"
+- chat: Casual conversation, quick questions, opinions, brainstorming, general knowledge.
+  Ex: "what's the capital of France", "help me name my project", "hey what's up"
+- summarize: Condense text, extract key points, create briefs from articles/emails/notes.
+  Ex: "summarize this article", "key takeaways from this meeting", "TLDR this thread"
+- batch-triage: Classify, sort, or label multiple items. Structured JSON output expected.
+  Ex: "categorize these 50 emails", "label these support tickets by priority"
+- vision: Image or screenshot analysis, OCR, UI inspection, chart reading.
+  Ex: "what does this screenshot show", "extract text from this image", "describe this chart"
+- private: Sensitive financial/tax/legal work that must stay local. No cloud services.
+  Ex: "analyze my tax return", "review this confidential contract", "calculate my net worth"
+
+Privacy: true if the prompt contains personal financial data, tax info, medical info, credentials, or the user explicitly requests privacy. Otherwise false.
+
+Output format (no other text):
+{"alias": "<alias>", "privacy": <bool>, "confidence": <0.0-1.0>}

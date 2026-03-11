@@ -1,0 +1,416 @@
+{
+  "name": "Email Triage — IMAP + LLM Classification",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Every 15 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "mailbox": "INBOX",
+        "postProcessAction": "nothing",
+        "options": {
+          "customEmailConfig": "host=imap.fastmail.com&port=993&tls=true",
+          "unseen": true
+        }
+      },
+      "id": "imap-fetch",
+      "name": "Fastmail IMAP — Fetch Unread",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2,
+      "position": [260, 300],
+      "credentials": {
+        "imap": {
+          "id": "FASTMAIL_IMAP_CREDENTIAL_ID",
+          "name": "Fastmail IMAP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract email metadata for classification\nconst items = [];\n\nfor (const item of $input.all()) {\n  const email = item.json;\n\n  // Extract sender — IMAP node provides from as object or string\n  let sender = 'unknown';\n  let senderEmail = 'unknown';\n  if (email.from) {\n    if (typeof email.from === 'string') {\n      sender = email.from;\n      // Try to extract email from angle brackets\n      const emailMatch = email.from.match(/<([^>]+)>/);\n      senderEmail = emailMatch ? emailMatch[1] : email.from;\n    } else if (email.from.value && email.from.value[0]) {\n      sender = email.from.value[0].name\n        ? `${email.from.value[0].name} <${email.from.value[0].address}>`\n        : email.from.value[0].address;\n      senderEmail = email.from.value[0].address;\n    } else if (email.from.text) {\n      sender = email.from.text;\n      const emailMatch = email.from.text.match(/<([^>]+)>/);\n      senderEmail = emailMatch ? emailMatch[1] : email.from.text;\n    }\n  }\n\n  // Extract subject\n  const subject = email.subject || '(no subject)';\n\n  // Extract date\n  const date = email.date || email.receivedAt || new Date().toISOString();\n\n  // Extract body snippet — first 500 chars\n  let bodySnippet = '';\n  if (email.text) {\n    bodySnippet = email.text.substring(0, 500);\n  } else if (email.html) {\n    // Strip HTML tags for a readable snippet\n    bodySnippet = email.html\n      .replace(/<style[^>]*>[\\s\\S]*?<\\/style>/gi, '')\n      .replace(/<script[^>]*>[\\s\\S]*?<\\/script>/gi, '')\n      .replace(/<[^>]+>/g, ' ')\n      .replace(/\\s+/g, ' ')\n      .trim()\n      .substring(0, 500);\n  } else if (email.textPlain) {\n    bodySnippet = email.textPlain.substring(0, 500);\n  }\n\n  // Preserve the original message UID/ID for IMAP operations\n  const messageId = email.messageId || email.uid || '';\n\n  items.push({\n    json: {\n      messageId,\n      sender,\n      senderEmail,\n      subject,\n      date,\n      bodySnippet\n    }\n  });\n}\n\nreturn items;"
+      },
+      "id": "extract-metadata",
+      "name": "Extract Email Metadata",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:4000/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"model\": \"batch-triage\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an email classifier. Return JSON with: category (one of: Urgent, Finance, Career, Personal, Newsletter, Spam, Homelab, Client), priority (1-5, 5=highest), action (one of: respond, review, archive, delegate, flag), confidence (0.0-1.0), summary (one sentence). Output ONLY JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Classify this email:\\nFrom: \" + $json.sender + \"\\nSubject: \" + $json.subject + \"\\nBody: \" + $json.bodySnippet\n    }\n  ],\n  \"temperature\": 0.1,\n  \"max_tokens\": 300\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "llm-classify",
+      "name": "LiteLLM — Classify Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [780, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "LITELLM_CREDENTIAL_ID",
+          "name": "LiteLLM Gateway Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the LLM classification response\nconst items = [];\n\nfor (const item of $input.all()) {\n  const llmResponse = item.json;\n\n  // Get original email metadata from the Extract node\n  const emailMeta = $('Extract Email Metadata').item.json;\n\n  let classification;\n  try {\n    const content = llmResponse.choices[0].message.content;\n    // Handle both string and pre-parsed JSON\n    if (typeof content === 'string') {\n      // Strip markdown code fences if present\n      const cleaned = content.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n      classification = JSON.parse(cleaned);\n    } else {\n      classification = content;\n    }\n  } catch (e) {\n    // Fallback classification on parse error\n    classification = {\n      category: 'Personal',\n      priority: 3,\n      action: 'review',\n      confidence: 0.0,\n      summary: 'Classification parse error: ' + e.message\n    };\n  }\n\n  // Normalize priority to integer 1-5\n  let priority = parseInt(classification.priority, 10);\n  if (isNaN(priority) || priority < 1) priority = 1;\n  if (priority > 5) priority = 5;\n\n  // Normalize confidence to float 0.0-1.0\n  let confidence = parseFloat(classification.confidence);\n  if (isNaN(confidence)) confidence = 0.0;\n  if (confidence < 0) confidence = 0.0;\n  if (confidence > 1) confidence = 1.0;\n\n  items.push({\n    json: {\n      // Original email fields\n      messageId: emailMeta.messageId,\n      sender: emailMeta.sender,\n      senderEmail: emailMeta.senderEmail,\n      subject: emailMeta.subject,\n      date: emailMeta.date,\n      // Classification fields\n      category: classification.category || 'Personal',\n      priority,\n      action: classification.action || 'review',\n      confidence,\n      summary: classification.summary || ''\n    }\n  });\n}\n\nreturn items;"
+      },
+      "id": "parse-llm-response",
+      "name": "Parse LLM Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1040, 300]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.priority }}",
+                    "rightValue": 5,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Priority 5 — Urgent"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.priority }}",
+                    "rightValue": 4,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Priority 4 — Important"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.priority }}",
+                    "rightValue": 3,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Priority 3 — Normal"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.priority }}",
+                    "rightValue": 2,
+                    "operator": {
+                      "type": "number",
+                      "operation": "lte"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Priority 1-2 — Low"
+            }
+          ],
+          "fallbackOutput": {
+            "active": true
+          }
+        },
+        "options": {
+          "allMatchingOutputs": false
+        }
+      },
+      "id": "route-by-priority",
+      "name": "Route by Priority",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [1300, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.38:8090/email-urgent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Title",
+              "value": "={{ 'URGENT: ' + $json.subject }}"
+            },
+            {
+              "name": "Priority",
+              "value": "urgent"
+            },
+            {
+              "name": "Tags",
+              "value": "={{ 'email,' + $json.category.toLowerCase() }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "string",
+        "body": "={{ 'From: ' + $json.sender + '\\nCategory: ' + $json.category + '\\nAction: ' + $json.action + '\\n\\n' + $json.summary }}",
+        "options": {}
+      },
+      "id": "ntfy-urgent",
+      "name": "ntfy — Urgent (P5)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1620, 60]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.38:8090/email-important",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Title",
+              "value": "={{ $json.category + ': ' + $json.subject }}"
+            },
+            {
+              "name": "Priority",
+              "value": "high"
+            },
+            {
+              "name": "Tags",
+              "value": "={{ 'email,' + $json.category.toLowerCase() }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "string",
+        "body": "={{ 'From: ' + $json.sender + '\\nAction: ' + $json.action + '\\n\\n' + $json.summary }}",
+        "options": {}
+      },
+      "id": "ntfy-important",
+      "name": "ntfy — Important (P4)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1620, 240]
+    },
+    {
+      "parameters": {},
+      "id": "log-normal",
+      "name": "Log Only (P3)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1620, 420]
+    },
+    {
+      "parameters": {
+        "mailbox": "INBOX",
+        "postProcessAction": "read",
+        "options": {
+          "customEmailConfig": "host=imap.fastmail.com&port=993&tls=true"
+        }
+      },
+      "id": "imap-archive",
+      "name": "IMAP — Mark Read (P1-2)",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2,
+      "position": [1620, 600],
+      "credentials": {
+        "imap": {
+          "id": "FASTMAIL_IMAP_CREDENTIAL_ID",
+          "name": "Fastmail IMAP"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Alternative archive approach: use an HTTP Request to Fastmail JMAP\n// to mark specific messages as read, since n8n's IMAP node doesn't\n// support marking individual messages by UID.\n//\n// This Code node logs the archive action. In production, replace with\n// a JMAP Email/set call or an IMAP STORE command via a custom function.\n//\n// For now, log the emails that should be archived.\nconst items = [];\n\nfor (const item of $input.all()) {\n  const email = item.json;\n  console.log(`[ARCHIVE] Marking as read: \"${email.subject}\" from ${email.sender} (priority: ${email.priority}, category: ${email.category})`);\n  items.push({\n    json: {\n      ...email,\n      archived: true,\n      archivedAt: new Date().toISOString()\n    }\n  });\n}\n\nreturn items;"
+      },
+      "id": "archive-low-priority",
+      "name": "Archive — Mark Read (P1-2)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1620, 600]
+    },
+    {
+      "parameters": {},
+      "id": "fallback-log",
+      "name": "Fallback — Log",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1620, 780]
+    }
+  ],
+  "connections": {
+    "Every 15 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Fastmail IMAP — Fetch Unread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fastmail IMAP — Fetch Unread": {
+      "main": [
+        [
+          {
+            "node": "Extract Email Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Email Metadata": {
+      "main": [
+        [
+          {
+            "node": "LiteLLM — Classify Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LiteLLM — Classify Email": {
+      "main": [
+        [
+          {
+            "node": "Parse LLM Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse LLM Response": {
+      "main": [
+        [
+          {
+            "node": "Route by Priority",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Priority": {
+      "main": [
+        [
+          {
+            "node": "ntfy — Urgent (P5)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ntfy — Important (P4)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Only (P3)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Archive — Mark Read (P1-2)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fallback — Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "pinData": {},
+  "tags": [
+    {
+      "name": "email-triage"
+    },
+    {
+      "name": "S5"
+    },
+    {
+      "name": "phase-2"
+    }
+  ],
+  "triggerCount": 1,
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": ""
+  }
+}
